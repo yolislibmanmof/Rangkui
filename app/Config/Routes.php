@@ -82,7 +82,7 @@ $routes->post('admin-dashboard/delete/(:num)', '\App\Modules\Submission\Controll
 // ===== 🎓 FITUR BARU: AKADEMIK TERPADU =====
 // Sertifikat Deposito Digital
 $routes->get('sertifikat/(:segment)', '\App\Modules\Bibliography\Controllers\CertificateController::verify/$1');
-$routes->get('sertifikat/download/(:num)', '\App\Modules\Bibliography\Controllers\CertificateController::download/$1');
+$routes->get('sertifikat/download/(:num)', '\App\Modules\Bibliography\Controllers\CertificateController::download/$1', ['filter' => 'auth']);
 
 // Auto-DDC Classification (endpoint AJAX)
 $routes->post('bibliography/suggest-ddc', '\App\Modules\Bibliography\Controllers\BibliographyController::suggestDdc');
@@ -99,5 +99,5 @@ $routes->group('bkd', ['namespace' => 'App\Modules\Reporting\Controllers'], func
 $routes->group('yudisium', function($routes) {
     $routes->get('/', '\App\Modules\Bibliography\Controllers\YudisiumController::index');
     $routes->get('cek/(:segment)', '\App\Modules\Bibliography\Controllers\YudisiumController::check/$1');
-    $routes->post('generate-certificate/(:num)', '\App\Modules\Bibliography\Controllers\YudisiumController::generateCertificate/$1');
+    $routes->get('generate-certificate/(:num)', '\App\Modules\Bibliography\Controllers\YudisiumController::generateCertificate/$1');
 });

@@ -7,13 +7,7 @@ class BkdController extends BaseController
 {
     public function index()
     {
-        $db = \Config\Database::connect();
-        $data = [
-            'title' => 'Laporan BKD Dosen',
-            'semesters' => $this->getAvailableSemesters(),
-            'stats' => $this->getStats()
-        ];
-        return view('Modules/Reporting/Views/bkd_index', $data);
+        return redirect()->to('/bkd/laporan');
     }
 
     public function laporan()
@@ -61,7 +55,8 @@ class BkdController extends BaseController
             'semesters' => $this->getAvailableSemesters()
         ];
 
-        return view('Modules/Reporting/Views/bkd_laporan', $data);
+                // laporan():
+        _render('Reporting/bkd_laporan', 'Laporan BKD Semester ' . $semester, $data);
     }
 
     public function generate()

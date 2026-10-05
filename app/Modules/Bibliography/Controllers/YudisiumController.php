@@ -7,11 +7,9 @@ class YudisiumController extends BaseController
 {
     public function index()
     {
-        $data = [
-            'title' => 'Gerbang Yudisium - Self Check',
+        _renderView('yudisium_index', 'Gerbang Yudisium', [
             'max_similarity' => $this->getSetting('yudisium_max_similarity', 25)
-        ];
-        return view('Modules/Bibliography/Views/yudisium_index', $data);
+        ]);
     }
 
     public function check($nim)
@@ -86,7 +84,7 @@ class YudisiumController extends BaseController
             return $this->response->setJSON(['ok' => true, 'data' => $result]);
         }
 
-        return view('Modules/Bibliography/Views/yudisium_result', ['result' => $result]);
+        _renderView('yudisium_result', 'Hasil Cek Yudisium', ['result' => $result]);
     }
 
     public function generateCertificate($biblio_id)

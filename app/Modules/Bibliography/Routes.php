@@ -36,12 +36,7 @@ $routes->group('bibliography', ['namespace' => 'App\Modules\Bibliography\Control
     $routes->post('bulk-exec', 'BulkController::exec');
     $routes->post('bulk-export', 'BulkController::export');
 
-        // ===== INTEGRITY SCANNER =====
-    $routes->get('integrity', 'IntegrityController::index');
-    $routes->post('integrity-scan', 'IntegrityController::scan');
-    $routes->get('integrity-detail', 'IntegrityController::detail');
-    $routes->post('integrity-scan-all', 'IntegrityController::scanAll');
-        // ===== INTEGRITY SCANNER =====
+    // ===== INTEGRITY SCANNER =====
     $routes->get('integrity', 'IntegrityController::index');
     $routes->get('integrity-dashboard', 'IntegrityController::dashboard');
     $routes->post('integrity-scan', 'IntegrityController::scan');
