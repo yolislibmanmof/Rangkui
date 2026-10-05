@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php?/$1 [QSA,L]
+</IfModule>
+
+<IfModule mod_fcgid.c>
+    Options -MultiViews
+</IfModule>
+
+<IfModule mod_php.c>
+    php_flag cgi.fix_pathinfo 0
+</IfModule>
