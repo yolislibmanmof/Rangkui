@@ -77,3 +77,4 @@ $routes->get('submission/dashboard', '\App\Modules\Submission\Controllers\AdminD
 $routes->get('submission/approve/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::approve/$1');
 $routes->post('submission/reject/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::reject/$1');
 $routes->post('submission/requestRevisi/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::requestRevisi/$1');
+$routes->post('admin-dashboard/delete/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::delete/$1');

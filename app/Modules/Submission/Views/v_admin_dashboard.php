@@ -151,6 +151,8 @@
 .xuActionBtn.reject { background: linear-gradient(135deg, var(--xl-rose), #be123c); color: #fff; }
 .xuActionBtn.revisi { background: linear-gradient(135deg, var(--xl-amber), #d97706); color: #fff; }
 .xuActionBtn.view { background: #f1f5f9; color: #475569; }
+.xuActionBtn.delete { background: linear-gradient(135deg, var(--xl-rose), #be123c); color: #fff; }
+.xuActionBtn.delete:hover { box-shadow: 0 4px 12px rgba(225,29,72,0.35); }
 
 .xuActionBtn:hover {
     transform: translateY(-2px);
@@ -290,11 +292,39 @@
                                 </button>
                             <?php endif; ?>
                             
-                            <!-- PERBAIKAN: Dihapus target="_blank" agar membuka di tab yang sama -->
                             <a href="<?= base_url('bibliography/edit?bbi=' . slim_encrypt($sub->biblio_id)) ?>" 
                                class="xuActionBtn view">
                                 <i class="fa fa-eye"></i> Lihat
                             </a>
+                            
+<button type="button" 
+        class="xuActionBtn delete"
+        onclick="
+            (function(btn) {
+                var t = '<?= esc(str_replace(['\'', '\n', '\r', '\\'], [' ', ' ', ' ', ''], $sub->title ?? 'Submission')) ?>';
+                if (t.length > 60) t = t.substring(0, 60) + '...';
+                
+                if (!confirm('⚠️ Hapus Submission?\n\nJudul: ' + t + '\n\nData akan dihapus PERMANEN (submission, bibliografi, file PDF, relasi).')) return;
+                if (!confirm('🔴 KONFIRMASI TERAKHIR\n\nData TIDAK BISA dikembalikan.\nKlik OK untuk menghapus.')) return;
+                
+                document.title = '🗑️ Menghapus...';
+                
+                var f = document.createElement('form');
+                f.method = 'POST';
+                f.action = '<?= base_url('admin-dashboard/delete/') ?>' + <?= $sub->submission_id ?>;
+                
+                var c = document.createElement('input');
+                c.type = 'hidden';
+                c.name = '<?= csrf_token() ?>';
+                c.value = '<?= csrf_hash() ?>';
+                f.appendChild(c);
+                
+                document.body.appendChild(f);
+                f.submit();
+            })(this);
+        ">
+    <i class="fa fa-trash"></i> Hapus
+</button>
                         </div>
                     </td>
                 </tr>
@@ -363,5 +393,49 @@ function showRejectModal(submissionId) {
     document.getElementById('formReject').action = '<?= base_url('submission/reject/') ?>' + submissionId;
     var modal = new bootstrap.Modal(document.getElementById('rejectModal'));
     modal.show();
+}
+
+// ✅ FUNGSI HAPUS SUBMISSION (dengan konfirmasi 2 tahap untuk keamanan)
+function confirmDeleteSubmission(submissionId, title) {
+    var shortTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
+    var confirmed = confirm(
+        '⚠️ PERINGATAN: Hapus Submission\n\n' +
+        'Judul: "' + shortTitle + '"\n\n' +
+        'Tindakan ini akan menghapus PERMANEN:\n' +
+        '• Record submission\n' +
+        '• Record bibliografi\n' +
+        '• File PDF di server\n' +
+        '• Semua relasi (penulis, subyek, lampiran)\n\n' +
+        'Apakah Anda yakin ingin melanjutkan?'
+    );
+    
+    if (!confirmed) return;
+    
+    var doubleCheck = confirm(
+        '🔴 KONFIRMASI TERAKHIR\n\n' +
+        'Data yang dihapus TIDAK BISA dikembalikan.\n' +
+        'Ketik OK untuk melanjutkan penghapusan.'
+    );
+    
+    if (!doubleCheck) return;
+    
+    // Tampilkan loading
+    var originalTitle = document.title;
+    document.title = '🗑️ Menghapus...';
+    
+    // Buat form POST dan submit
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= base_url('submission/delete/') ?>' + submissionId;
+    
+    // Tambahkan CSRF token
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '<?= csrf_token() ?>';
+    csrfInput.value = '<?= csrf_hash() ?>';
+    form.appendChild(csrfInput);
+    
+    document.body.appendChild(form);
+    form.submit();
 }
 </script>
