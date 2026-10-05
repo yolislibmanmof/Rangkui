@@ -1141,8 +1141,14 @@ html.xu-dark #xuTopikChips{background:rgba(5,150,105,.1);border-color:rgba(5,150
                     </div>
                     <div class="col-md-12">
                         <div class="form-group">
-                            <label for="class" class="control-label">Classification</label>
+                            <label for="class" class="control-label">
+                                Classification
+                                <button type="button" id="xuBtnDdc" class="btn btn-sm">
+                                    <i class="fa fa-magic"></i> Saran DDC (AI)
+                                </button>
+                            </label>
                             <input class="form-control" type="text" name="class" id="class" value="">
+                            <small class="form-text">Contoh: 370.193 (Dewey Decimal Classification)</small>
                         </div>
                     </div>
                     <div class="col-md-12">
@@ -1556,6 +1562,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     var successMsg = filled.length > 0 
                         ? '<strong>Sukses!</strong> Terisi otomatis: ' + filled.join(', ') + '. Silakan verifikasi.' 
                         : '<strong>Selesai.</strong> Namun tidak ada field yang terisi. Buka Console (F12) untuk lihat log.';
+                    if (j.warning) successMsg += '<br><small>⚠️ ' + j.warning + '</small>';
                     
                     showStatus(successMsg, 'success', 'check-circle');
                     
@@ -1742,5 +1749,57 @@ document.addEventListener('DOMContentLoaded', function(){
                 alert('Gagal terhubung ke server.');
             });
     });
+
+    // ✅ FITUR #5: AUTO-DDC CLASSIFICATION
+    var btnDdc = document.getElementById('xuBtnDdc');
+    if (btnDdc) {
+        btnDdc.addEventListener('click', function() {
+            var title = document.getElementById('title')?.value || '';
+            var abstract = document.getElementById('notes')?.value || '';
+            var dept = document.getElementById('departement')?.value || '';
+            
+            if (!title && !abstract) {
+                alert('Isi judul atau abstrak terlebih dahulu');
+                return;
+            }
+            
+            var btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Menganalisis...';
+            
+            var fd = new FormData();
+            fd.append('title', title);
+            fd.append('abstract', abstract);
+            fd.append('department', dept);
+            
+            fetch(baseUrl + 'bibliography/suggest-ddc', { method: 'POST', body: fd })
+                .then(function(r) { return r.json(); })
+                .then(function(j) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-magic"></i> Saran DDC (AI)';
+                    if (!j.ok) { alert(j.error || 'Gagal mendapatkan saran DDC'); return; }
+                    
+                    var d = j.data;
+                    if (d.primary) {
+                        document.getElementById('class').value = d.primary;
+                        var msg = '✅ DDC Disarankan: ' + d.primary;
+                        if (d.primary_label) msg += '\n\n📚 ' + d.primary_label;
+                        if (d.explanation) msg += '\n\n💡 ' + d.explanation;
+                        if (d.alternatives && d.alternatives.length > 0) {
+                            msg += '\n\n📋 Alternatif lain:';
+                            d.alternatives.forEach(function(alt) {
+                                msg += '\n  • ' + alt.code + ' - ' + alt.label;
+                            });
+                        }
+                        alert(msg);
+                    }
+                })
+                .catch(function() {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-magic"></i> Saran DDC (AI)';
+                    alert('Gagal terhubung ke server AI');
+                });
+        });
+    }
 });
 </script>

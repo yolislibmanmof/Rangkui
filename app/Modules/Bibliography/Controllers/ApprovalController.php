@@ -151,7 +151,16 @@ class ApprovalController extends BaseController
             'approval_status' => 'published', 'opac_hide' => 0,
         ]);
 
-        slim_alert('success', 'Dokumen disetujui dan DITERBITKAN.');
+        // ✅ AUTO-ISSUE SERTIFIKAT DEPOSITO DIGITAL
+        $certController = new \App\Modules\Bibliography\Controllers\CertificateController();
+        $certId = $certController->issueCertificate($sub->biblio_id, $this->session->get('user_id'));
+        if ($certId) {
+            $cert = $db->table('biblio_certificates')->where('cert_id', $certId)->get()->getRow();
+            slim_alert('success', 'Dokumen disetujui dan DITERBITKAN. Sertifikat: ' . $cert->certificate_no);
+        } else {
+            slim_alert('success', 'Dokumen disetujui dan DITERBITKAN.');
+        }
+        
         return redirect()->to('bibliography/pipeline');
     }
 
@@ -243,12 +252,17 @@ class ApprovalController extends BaseController
                     'current_stage' => $next->stage_name, 'status' => 'menunggu', 'note' => $note,
                 ]);
             } else {
+                // ✅ INI TAHAP TERAKHIR - DOKUMEN JADI PUBLISHED
                 $db->table('xu_submission')->where('submission_id', $sub->submission_id)->update([
                     'current_stage' => 'selesai', 'status' => 'terbit', 'note' => $note,
                 ]);
                 $db->table('biblio')->where('biblio_id', $sub->biblio_id)->update([
                     'approval_status' => 'published', 'opac_hide' => 0,
                 ]);
+                
+                // ✅ AUTO-ISSUE SERTIFIKAT DEPOSITO DIGITAL
+                $certController = new \App\Modules\Bibliography\Controllers\CertificateController();
+                $certController->issueCertificate($sub->biblio_id, null);
             }
         } elseif ($action === 'revisi') {
             $db->table('xu_submission')->where('submission_id', $sub->submission_id)->update([

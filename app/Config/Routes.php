@@ -78,3 +78,26 @@ $routes->get('submission/approve/(:num)', '\App\Modules\Submission\Controllers\A
 $routes->post('submission/reject/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::reject/$1');
 $routes->post('submission/requestRevisi/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::requestRevisi/$1');
 $routes->post('admin-dashboard/delete/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::delete/$1');
+
+// ===== 🎓 FITUR BARU: AKADEMIK TERPADU =====
+// Sertifikat Deposito Digital
+$routes->get('sertifikat/(:segment)', '\App\Modules\Bibliography\Controllers\CertificateController::verify/$1');
+$routes->get('sertifikat/download/(:num)', '\App\Modules\Bibliography\Controllers\CertificateController::download/$1');
+
+// Auto-DDC Classification (endpoint AJAX)
+$routes->post('bibliography/suggest-ddc', '\App\Modules\Bibliography\Controllers\BibliographyController::suggestDdc');
+
+// Laporan BKD Dosen
+$routes->group('bkd', ['namespace' => 'App\Modules\Reporting\Controllers'], function($routes) {
+    $routes->get('/', 'BkdController::index');
+    $routes->get('laporan', 'BkdController::laporan');
+    $routes->post('generate', 'BkdController::generate');
+    $routes->get('export/(:segment)', 'BkdController::export/$1');
+});
+
+// Gerbang Yudisium
+$routes->group('yudisium', function($routes) {
+    $routes->get('/', '\App\Modules\Bibliography\Controllers\YudisiumController::index');
+    $routes->get('cek/(:segment)', '\App\Modules\Bibliography\Controllers\YudisiumController::check/$1');
+    $routes->post('generate-certificate/(:num)', '\App\Modules\Bibliography\Controllers\YudisiumController::generateCertificate/$1');
+});

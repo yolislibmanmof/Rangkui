@@ -635,7 +635,8 @@ class BibliographyController extends BaseController
                     'biblio_contributor',
                     'biblio_supervisor',
                     'biblio_examiner',
-                    'biblio_topic'
+                    'biblio_topic',
+                    'biblio_certificates'   // ✅ Sertifikat ikut dihapus
                 ];
 
                 foreach ($tables as $table) {
@@ -892,6 +893,17 @@ Teks Dokumen:
                 return $this->response->setJSON(['ok' => false, 'error' => 'Gagal koneksi jaringan: ' . $curlError]);
             }
 
+            // ✅ KEY MATI / KUOTA HABIS -> beralih ke ekstraksi lokal (heuristik)
+            if (in_array($httpCode, [401, 403, 429])) {
+                log_message('warning', 'extract_ai: API tidak tersedia (HTTP ' . $httpCode . '), beralih ke ekstraksi lokal.');
+                $local = $this->localExtract($fullText);
+                return $this->response->setJSON([
+                    'ok'      => true,
+                    'data'    => $local,
+                    'warning' => 'AI Gemini tidak tersedia (HTTP ' . $httpCode . '). Form diisi oleh mesin ekstraksi lokal (heuristik). Ganti GEMINI_API_KEY untuk hasil AI penuh.'
+                ]);
+            }
+
             if ($httpCode !== 200) {
                 $apiError = json_decode($response, true);
                 $errorMsg = $apiError['error']['message'] ?? 'Unknown API Error (HTTP ' . $httpCode . ')';
@@ -938,6 +950,230 @@ Teks Dokumen:
         }
     }
 
+        /**
+     * Auto-DDC Classification via Gemini AI
+     */
+    /**
+     * Auto-DDC Classification via Gemini AI (dengan fallback lokal)
+     */
+    public function suggestDdc()
+    {
+        $this->response->setContentType('application/json');
+
+        if (!$this->request->is('post')) {
+            return $this->response->setJSON(['ok' => false, 'error' => 'Method tidak diizinkan']);
+        }
+
+        $title      = (string) $this->request->getPost('title');
+        $abstract   = (string) $this->request->getPost('abstract');
+        $department = (string) $this->request->getPost('department');
+
+        if (!$title && !$abstract) {
+            return $this->response->setJSON(['ok' => false, 'error' => 'Judul/abstrak diperlukan']);
+        }
+
+        $apiKey     = trim(env('GEMINI_API_KEY', ''));
+        $localDdc   = $this->localDdcGuess($title . ' ' . $abstract . ' ' . $department);
+
+        // Jika API key kosong, langsung pakai klasifikasi lokal
+        if (empty($apiKey)) {
+            return $this->response->setJSON([
+                'ok'      => true,
+                'data'    => $localDdc,
+                'source'  => 'local',
+                'warning' => 'GEMINI_API_KEY tidak ditemukan. Menggunakan klasifikasi lokal.'
+            ]);
+        }
+
+        $prompt = "Anda adalah ahli klasifikasi perpustakaan Dewey Decimal Classification (DDC).
+Berdasarkan informasi berikut, tentukan nomor klasifikasi DDC yang paling tepat.
+
+Judul: {$title}
+Abstrak: " . mb_substr($abstract, 0, 2000) . "
+Departemen: {$department}
+
+Format JSON (tanpa markdown):
+{
+    \"primary\": \"Nomor DDC utama (contoh: 370.193)\",
+    \"primary_label\": \"Deskripsi singkat\",
+    \"alternatives\": [
+        {\"code\": \"153.8\", \"label\": \"Deskripsi alternatif\"}
+    ],
+    \"explanation\": \"Penjelasan singkat alasan klasifikasi\"
+}";
+
+        // ===== LAPIS 1: COBA BERBAGAI MODEL (anti kuota habis / model mati) =====
+        $models    = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest'];
+        $lastError = '';
+
+        foreach ($models as $model) {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $apiKey;
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                'generationConfig' => ['temperature' => 0.1]
+            ]));
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200) {
+                $result = json_decode($response, true);
+                $aiText = $result['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                $aiText = preg_replace('/^```(?:json)?\s*|\s*```$/', '', trim($aiText));
+                $data   = json_decode($aiText, true);
+
+                if ($data && !empty($data['primary'])) {
+                    return $this->response->setJSON(['ok' => true, 'data' => $data, 'source' => $model]);
+                }
+                $lastError = 'Respons AI tidak valid';
+                continue;
+            }
+
+            $apiError  = json_decode($response, true);
+            $lastError = 'HTTP ' . $httpCode . ': ' . ($apiError['error']['message'] ?? 'unknown');
+            log_message('error', 'suggestDdc model ' . $model . ' gagal: ' . $lastError);
+
+            // ✅ Key mati = semua model pasti gagal, langsung ke fallback lokal
+            if ($httpCode === 401 || $httpCode === 403) {
+                $lastError = 'API Key tidak valid/dicabut (HTTP ' . $httpCode . ')';
+                break;
+            }
+        }
+
+        // ===== LAPIS 2: SEMUA MODEL GAGAL -> FALLBACK LOKAL =====
+        return $this->response->setJSON([
+            'ok'      => true,
+            'data'    => $localDdc,
+            'source'  => 'local',
+            'warning' => 'AI tidak tersedia (' . $lastError . '). Menggunakan klasifikasi lokal berbasis kata kunci.'
+        ]);
+    }
+
+    /**
+     * FALLBACK LOKAL: Ekstraksi metadata tanpa AI (heuristik teks PDF)
+     */
+    private function localExtract($fullText)
+    {
+        // Rapikan baris
+        $lines = preg_split('/\r\n|\r|\n/', $fullText);
+        $clean = [];
+        foreach ($lines as $l) {
+            $l = trim(preg_replace('/\s+/', ' ', $l));
+            if ($l !== '') $clean[] = $l;
+        }
+        $textFlat = implode("\n", $clean);
+
+        // --- JUDUL: baris terpanjang (biasanya kapital) di 15 baris pertama ---
+        $title = '';
+        $best  = 0;
+        foreach (array_slice($clean, 0, 15) as $l) {
+            $len   = mb_strlen($l);
+            $bonus = (mb_strtoupper($l) === $l) ? 1.2 : 1; // judul biasanya KAPITAL
+            $score = $len * $bonus;
+            if ($len >= 20 && $len <= 300 && $score > $best) {
+                $best  = $score;
+                $title = $l;
+            }
+        }
+
+        // --- ABSTRAK: teks di antara 'ABSTRAK' dan 'Kata Kunci'/'ABSTRACT' ---
+        $notes = '';
+        if (preg_match('/ABSTRAK\s*(.{200,3000}?)(KATA\s*KUNCI|Kata\s*Kunci|ABSTRACT)/s', $textFlat, $m)) {
+            $notes = trim(preg_replace('/\s+/', ' ', $m[1]));
+        } elseif (preg_match('/ABSTRAK\s*(.{200,3000})/s', $textFlat, $m)) {
+            $notes = trim(preg_replace('/\s+/', ' ', $m[1]));
+        }
+
+        // --- TAHUN: angka 4 digit pertama ---
+        $year = '';
+        if (preg_match('/\b(19|20)\d{2}\b/', $textFlat, $m)) $year = $m[0];
+
+        // --- NIM: deret 8-20 digit ---
+        $studentId = '';
+        if (preg_match('/\b\d{8,20}\b/', $textFlat, $m)) $studentId = $m[0];
+
+        // --- DEPARTEMEN: baris berisi 'Program Studi' / 'Jurusan' / 'Fakultas' ---
+        $department = '';
+        foreach ($clean as $l) {
+            if (preg_match('/(program\s*studi|jurusan|departemen|fakultas)/i', $l) && mb_strlen($l) < 120) {
+                $department = $l;
+                break;
+            }
+        }
+
+        // --- JENIS KARYA (GMD) ---
+        $gmd = 1;
+        if (stripos($textFlat, 'disertasi') !== false)      $gmd = 47;
+        elseif (stripos($textFlat, 'tesis') !== false)      $gmd = 48;
+        elseif (stripos($textFlat, 'skripsi') !== false)    $gmd = 43;
+
+        return [
+            'title'          => $title,
+            'publish_year'   => $year,
+            'gmd'            => $gmd,
+            'notes'          => $notes,
+            'department'     => $department,
+            'student_id'     => $studentId,
+            'authors'        => [],
+            'supervisors'    => [],
+            'subjects'       => [],
+            'publisher'      => '',
+            'place'          => '',
+            'language'       => 'id',
+            'collation'      => '',
+            'classification' => ''
+        ];
+    }
+
+    /**
+     * Klasifikasi DDC lokal berbasis kata kunci (bekerja tanpa internet/API)
+     */
+    private function localDdcGuess($text)
+    {
+        $t = mb_strtolower($text);
+
+        $map = [
+            ['658', 'Manajemen & Bisnis',            ['manajemen', 'bisnis', 'pemasaran', 'kepemimpinan', 'karyawan', 'sumber daya manusia', 'organisasi']],
+            ['370', 'Pendidikan',                    ['pendidikan', 'pembelajaran', 'siswa', 'guru', 'kurikulum', 'sekolah', 'akademik']],
+            ['340', 'Hukum',                         ['hukum', 'undang', 'peraturan', 'pidana', 'perdata', 'keadilan']],
+            ['610', 'Kedokteran & Kesehatan',        ['kesehatan', 'medis', 'pasien', 'klinis', 'penyakit', 'perawat']],
+            ['004', 'Ilmu Komputer & Informatika',   ['informatika', 'komputer', 'sistem informasi', 'algoritma', 'aplikasi', 'website', 'machine learning', 'kecerdasan buatan']],
+            ['150', 'Psikologi',                     ['psikologi', 'mental', 'perilaku', 'kepribadian', 'motivasi']],
+            ['297', 'Islam & Studi Keislaman',       ['islam', 'quran', 'syariah', 'muslim', 'dakwah', 'pesantren']],
+            ['330', 'Ekonomi & Keuangan',            ['ekonomi', 'keuangan', 'bank', 'inflasi', 'pasar']],
+            ['710', 'Arsitektur & Perencanaan Kota', ['arsitektur', 'tata ruang', 'perkotaan', 'bangunan']],
+            ['620', 'Teknik & Rekayasa',             ['teknik', 'rekayasa', 'mesin', 'sipil', 'elektro']],
+        ];
+
+        foreach ($map as $row) {
+            foreach ($row[2] as $kw) {
+                if (strpos($t, $kw) !== false) {
+                    return [
+                        'primary'       => $row[0],
+                        'primary_label' => $row[1],
+                        'alternatives'  => [],
+                        'explanation'   => 'Klasifikasi lokal: terdeteksi kata kunci "' . $kw . '".'
+                    ];
+                }
+            }
+        }
+
+        return [
+            'primary'       => '000',
+            'primary_label' => 'Umum / Knowledge',
+            'alternatives'  => [],
+            'explanation'   => 'Tidak ada kata kunci spesifik yang cocok; silakan klasifikasi manual.'
+        ];
+    }
 
     /**
      * ✅ Halaman Analytics - Statistik & Analitik Bibliografi

@@ -175,7 +175,8 @@ class AdminDashboard extends BaseController
                         'biblio_contributor',
                         'biblio_supervisor',
                         'biblio_examiner',
-                        'biblio_topic'
+                        'biblio_topic',
+                        'biblio_certificates'   // ✅ Sertifikat ikut dihapus
                     ];
 
                     foreach ($relationTables as $table) {
