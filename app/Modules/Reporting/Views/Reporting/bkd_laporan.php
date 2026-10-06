@@ -1,6 +1,3 @@
-<?php $this->extend('layout/template'); ?>
-<?php $this->section('content'); ?>
-
 <style>
 .bkWrap{padding:30px 24px;max-width:1200px;margin:0 auto;}
 .bkCard{background:#fff;border-radius:20px;box-shadow:0 16px 44px rgba(15,23,42,.08);overflow:hidden;border:1px solid rgba(5,150,105,.12);}
@@ -101,5 +98,3 @@
         </div>
     </div>
 </div>
-
-<?php $this->endSection(); ?>

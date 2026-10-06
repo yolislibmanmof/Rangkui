@@ -1,6 +1,3 @@
-<?php $this->extend('layout/template'); ?>
-<?php $this->section('content'); ?>
-
 <style>
 .yuWrap{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:40px 16px;}
 .yuCard{max-width:580px;width:100%;background:#fff;border-radius:22px;box-shadow:0 24px 64px rgba(5,150,105,.18);overflow:hidden;border:1px solid rgba(5,150,105,.12);}
@@ -40,12 +37,10 @@
                 <h6><i class="fa fa-info-circle"></i> Syarat Lulus Yudisium:</h6>
                 <ul>
                     <li>Dokumen skripsi/tesis/disertasi sudah di-submit & <strong>disetujui admin</strong></li>
-                    <li>Similarity score <strong>≤ <?= $max_similarity ?? 25 ?>%</strong></li>
+                    <li>Similarity score <strong>&le; <?= $max_similarity ?? 25 ?>%</strong></li>
                     <li>Telah menyelesaikan bebas tanggungan perpustakaan</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
-
-<?php $this->endSection(); ?>

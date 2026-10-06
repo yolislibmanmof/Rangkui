@@ -17,7 +17,8 @@ class CertificateController extends BaseController
             ->get()->getRow();
 
         if (!$cert) {
-            return view('Modules/Bibliography/Views/certificate_invalid');
+            _renderView('certificate_invalid', 'Sertifikat Tidak Valid', []);
+            return;
         }
 
         // Update download counter (view saja)
@@ -26,12 +27,7 @@ class CertificateController extends BaseController
             ->set('download_count', 'download_count + 1', false)
             ->update();
 
-        $data = [
-            'cert' => $cert,
-            'title' => 'Verifikasi Sertifikat Deposito Digital'
-        ];
-
-        return view('Modules/Bibliography/Views/certificate_verify', $data);
+        _renderView('certificate_verify', 'Verifikasi Sertifikat', ['cert' => $cert]);
     }
 
     /**
@@ -41,7 +37,7 @@ class CertificateController extends BaseController
     {
         $db = \Config\Database::connect();
         $cert = $db->table('biblio_certificates')
-            ->where('biblio_id', $biblio_id)
+            ->where('biblio_certificates.biblio_id', $biblio_id)
             ->join('biblio', 'biblio.biblio_id = biblio_certificates.biblio_id')
             ->get()->getRow();
 
@@ -49,15 +45,19 @@ class CertificateController extends BaseController
             return redirect()->back()->with('error', 'Sertifikat tidak ditemukan');
         }
 
-        // Generate PDF jika belum ada
-        if (!$cert->pdf_path || !file_exists(FCPATH . $cert->pdf_path)) {
-            $pdfPath = $this->generateCertificatePdf($cert);
-            if (!$pdfPath) {
-                return redirect()->back()->with('error', 'Gagal generate PDF sertifikat');
-            }
+        // Generate file HTML jika belum ada
+        $fullPath = FCPATH . ltrim($cert->pdf_path, '/');
+        $htmlPath = str_replace('.pdf', '.html', $fullPath);
+
+        if (!$cert->pdf_path || (!file_exists($fullPath) && !file_exists($htmlPath))) {
+            $this->generateCertificateHtml($cert);
         }
 
-        return $this->response->download(FCPATH . $cert->pdf_path, null);
+        // Download file HTML (karena PDF generator belum diinstall)
+        $downloadPath = file_exists($fullPath) ? $fullPath : $htmlPath;
+        $downloadName = $cert->certificate_no . '.html';
+
+        return $this->response->download($downloadPath, null)->setFileName($downloadName);
     }
 
     /**
@@ -66,12 +66,12 @@ class CertificateController extends BaseController
     public function issueCertificate($biblio_id, $issued_by = null)
     {
         $db = \Config\Database::connect();
-        
+
         // Cek apakah sertifikat sudah ada
         $existing = $db->table('biblio_certificates')
             ->where('biblio_id', $biblio_id)
             ->get()->getRow();
-        
+
         if ($existing) {
             return $existing->cert_id;
         }
@@ -80,17 +80,25 @@ class CertificateController extends BaseController
         $biblio = $db->table('biblio')->where('biblio_id', $biblio_id)->get()->getRow();
         if (!$biblio) return null;
 
-        // Cari file PDF utama untuk hash
-        $file = $db->table('biblio_files')
-            ->where('biblio_id', $biblio_id)
-            ->orderBy('file_id', 'DESC')
+        // Cari file PDF utama untuk hash (via relasi biblio_attachment)
+        $file = $db->table('biblio_attachment')
+            ->select('files.*')
+            ->join('files', 'files.file_id = biblio_attachment.file_id')
+            ->where('biblio_attachment.biblio_id', $biblio_id)
+            ->where('files.file_name LIKE', '%.pdf')
+            ->orderBy('files.file_id', 'DESC')
             ->get()->getRow();
 
         $hash = 'N/A';
-        if ($file) {
-            $filePath = FCPATH . ltrim($file->file_dir, '/') . '/' . $file->file_name;
+        if ($file && !empty($file->file_name)) {
+            $fileDir = trim($file->file_dir, '/');
+            $fileName = trim($file->file_name, '/');
+            $filePath = FCPATH . $fileDir . '/' . $fileName;
+
             if (file_exists($filePath)) {
                 $hash = hash_file('sha256', $filePath);
+            } else {
+                log_message('warning', 'issueCertificate: File tidak ditemukan di ' . $filePath);
             }
         }
 
@@ -112,10 +120,8 @@ class CertificateController extends BaseController
         return $db->insertID();
     }
 
-    private function generateCertificatePdf($cert)
+    private function generateCertificateHtml($cert)
     {
-        // Menggunakan DomPDF atau TCPDF
-        // Sederhana: generate HTML lalu convert
         $html = $this->renderCertificateHtml($cert);
         $path = 'uploads/certificates/' . $cert->certificate_no . '.pdf';
         $fullPath = FCPATH . $path;
@@ -124,8 +130,9 @@ class CertificateController extends BaseController
             mkdir(dirname($fullPath), 0755, true);
         }
 
-        // Simpan sebagai HTML (bisa di-upgrade ke PDF generator)
-        file_put_contents(str_replace('.pdf', '.html', $fullPath), $html);
+        // Simpan sebagai HTML (bisa di-upgrade ke PDF generator nanti)
+        $htmlPath = str_replace('.pdf', '.html', $fullPath);
+        file_put_contents($htmlPath, $html);
 
         // Update path di database
         $db = \Config\Database::connect();
@@ -133,7 +140,7 @@ class CertificateController extends BaseController
             ->where('cert_id', $cert->cert_id)
             ->update(['pdf_path' => $path]);
 
-        return $path;
+        return $htmlPath;
     }
 
     private function renderCertificateHtml($cert)

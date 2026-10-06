@@ -1,6 +1,3 @@
-<?php $this->extend('layout/template'); ?>
-<?php $this->section('content'); ?>
-
 <style>
 .cvWrap{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:40px 16px;}
 .cvCard{max-width:680px;width:100%;background:#fff;border-radius:22px;box-shadow:0 24px 64px rgba(5,150,105,.18);overflow:hidden;border:1px solid rgba(5,150,105,.12);border-top:5px solid #059669;}
@@ -67,5 +64,3 @@
         </div>
     </div>
 </div>
-
-<?php $this->endSection(); ?>

@@ -71,5 +71,3 @@ $sc = $statusColors[$result['overall_status']] ?? $statusColors['belum_lengkap']
         </div>
     </div>
 </div>
-
-<?php $this->endSection(); ?>

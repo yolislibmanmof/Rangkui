@@ -1501,49 +1501,9 @@ document.addEventListener('DOMContentLoaded', function(){
                 group('supervisor', 'supervisor', d.supervisors, 'Pembimbing');
                 group('topic', 'topic', d.subjects, 'Subyek');
 
-                // ✅ FALLBACK: Jika AI tidak mengembalikan abstrak, coba ekstrak sendiri dari teks
-                if (!d.notes || d.notes.trim() === '') {
-                    console.log("⚠️ Abstrak kosong dari AI, mencoba ekstrak manual...");
-                    
-                    // Cari kata kunci abstrak
-                    var abstractKeywords = ['abstrak', 'abstract', 'ringkasan'];
-                    var textLower = textToAnalyze.toLowerCase();
-                    var startIndex = -1;
-                    
-                    for (var keyword of abstractKeywords) {
-                        var idx = textLower.indexOf(keyword);
-                        if (idx !== -1) {
-                            startIndex = idx + keyword.length;
-                            break;
-                        }
-                    }
-                    
-                    if (startIndex !== -1) {
-                        // Ambil teks setelah kata kunci (sekitar 1500 karakter)
-                        var abstractText = textToAnalyze.substring(startIndex, startIndex + 1500);
-                        
-                        // Bersihkan dari karakter aneh dan batasi sampai titik terakhir
-                        abstractText = abstractText.replace(/^[^a-zA-Z0-9]+/, '').trim();
-                        var lastDot = abstractText.lastIndexOf('.');
-                        if (lastDot > 200) { // Pastikan minimal 200 karakter
-                            abstractText = abstractText.substring(0, lastDot + 1);
-                        }
-                        
-                        if (abstractText.length > 100) {
-                            d.notes = abstractText;
-                            console.log("✅ Abstrak berhasil diekstrak manual:", abstractText.substring(0, 100) + "...");
-                            
-                            // Isi field notes
-                            var notesEl = document.getElementById('notes');
-                            if (notesEl) {
-                                notesEl.value = abstractText;
-                                notesEl.style.height = 'auto';
-                                notesEl.style.height = (notesEl.scrollHeight) + 'px';
-                                filled.push('Abstrak (ekstrak manual)');
-                            }
-                        }
-                    }
-                }
+                // ✅ CATATAN: Fallback abstrak manual dihapus karena variabel 'textToAnalyze'
+                // hanya tersedia di backend PHP. Abstrak sepenuhnya bergantung pada
+                // AI (Gemini) atau fallback lokal heuristik di controller.
 
                 Promise.all(jobs).then(function(){
                     ['author', 'supervisor', 'topic'].forEach(function(id){
