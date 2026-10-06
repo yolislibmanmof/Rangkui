@@ -1,0 +1,374 @@
+/* ================================================================
+   RANGKUI DARK MODE — COMPLETE THEME VARIABLES
+   ================================================================ */
+
+/* ===== DARK MODE VARIABLES ===== */
+html.xu-dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --bg-card: #1e293b;
+    --bg-input: #0f172a;
+    --bg-hover: rgba(5, 150, 105, 0.08);
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-inverse: #0f172a;
+
+    --border-primary: rgba(5, 150, 105, 0.25);
+    --border-secondary: rgba(148, 163, 184, 0.2);
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+    --accent-emerald: #10b981;
+    --accent-gold: #f59e0b;
+    --accent-teal: #14b8a6;
+}
+
+/* ===== GLOBAL DARK MODE STYLES ===== */
+html.xu-dark body {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+html.xu-dark .content-wrapper,
+html.xu-dark .right_col,
+html.xu-dark .main_container {
+    background: var(--bg-primary) !important;
+}
+
+html.xu-dark .card,
+html.xu-dark .x_panel,
+html.xu-dark .panel,
+html.xu-dark .white-box {
+    background: var(--bg-card) !important;
+    border-color: var(--border-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+html.xu-dark .card-header,
+html.xu-dark .x_title,
+html.xu-dark .panel-heading {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+html.xu-dark h1, html.xu-dark h2, html.xu-dark h3,
+html.xu-dark h4, html.xu-dark h5, html.xu-dark h6,
+html.xu-dark .h1, html.xu-dark .h2, html.xu-dark .h3 {
+    color: var(--text-primary) !important;
+}
+
+html.xu-dark p, html.xu-dark span, html.xu-dark label,
+html.xu-dark .form-control, html.xu-dark .control-label {
+    color: var(--text-secondary) !important;
+}
+
+html.xu-dark .form-control,
+html.xu-dark input[type="text"],
+html.xu-dark input[type="email"],
+html.xu-dark input[type="password"],
+html.xu-dark textarea,
+html.xu-dark select {
+    background: var(--bg-input) !important;
+    border-color: var(--border-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+html.xu-dark .form-control:focus {
+    background: var(--bg-secondary) !important;
+    border-color: var(--accent-emerald) !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+}
+
+html.xu-dark .table {
+    color: var(--text-primary) !important;
+}
+
+html.xu-dark .table thead th {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-primary) !important;
+}
+
+html.xu-dark .table tbody tr {
+    border-color: var(--border-secondary) !important;
+}
+
+html.xu-dark .table tbody tr:hover {
+    background: var(--bg-hover) !important;
+}
+
+html.xu-dark .sidebar,
+html.xu-dark .left_col,
+html.xu-dark .nav_sidebar {
+    background: var(--bg-secondary) !important;
+}
+
+html.xu-dark .top_nav .navbar {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-primary) !important;
+}
+
+html.xu-dark .dropdown-menu {
+    background: var(--bg-card) !important;
+    border-color: var(--border-primary) !important;
+}
+
+html.xu-dark .dropdown-item {
+    color: var(--text-secondary) !important;
+}
+
+html.xu-dark .dropdown-item:hover {
+    background: var(--bg-hover) !important;
+    color: var(--accent-emerald) !important;
+}
+
+html.xu-dark .modal-content {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+}
+
+html.xu-dark .modal-header,
+html.xu-dark .modal-footer {
+    border-color: var(--border-primary) !important;
+}
+
+html.xu-dark a {
+    color: var(--accent-emerald) !important;
+}
+
+html.xu-dark a:hover {
+    color: var(--accent-gold) !important;
+}
+
+html.xu-dark .alert-info {
+    background: rgba(8, 145, 178, 0.15) !important;
+    border-color: rgba(8, 145, 178, 0.4) !important;
+    color: #67e8f9 !important;
+}
+
+html.xu-dark .alert-success {
+    background: rgba(5, 150, 105, 0.15) !important;
+    border-color: rgba(5, 150, 105, 0.4) !important;
+    color: #6ee7b7 !important;
+}
+
+html.xu-dark .alert-warning {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+    color: #fcd34d !important;
+}
+
+html.xu-dark .alert-danger {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    color: #fca5a5 !important;
+}
+
+/* ===== SMOOTH TRANSITION ===== */
+html, html *,
+html *:before, html *:after {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* Exclude transitions untuk elements yang tidak boleh animasi */
+html .no-transition,
+html .spinner-border,
+html .fa-spin {
+    transition: none !important;
+}
+
+/* ===== SCROLLBAR CUSTOM DARK ===== */
+html.xu-dark ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+html.xu-dark ::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+html.xu-dark ::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 5px;
+}
+
+html.xu-dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-emerald);
+}
+
+/* ===== CODE BLOCKS DARK ===== */
+html.xu-dark code,
+html.xu-dark pre {
+    background: var(--bg-primary) !important;
+    color: #6ee7b7 !important;
+    border-color: var(--border-primary) !important;
+}
+
+/* ===== BADGES & PILLS ===== */
+html.xu-dark .badge-light,
+html.xu-dark .label-default {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ===== IMAGES — slight brightness adjustment ===== */
+html.xu-dark img {
+    filter: brightness(0.92);
+}
+
+html.xu-dark img:hover {
+    filter: brightness(1);
+}
+
+/* ================================================================
+   DARK MODE — ULTIMATE THEME LAYOUT (ult-* & xp-*)
+   Menimpa background putih dari ultimate-theme.css
+   ================================================================ */
+
+/* ===== 1. BACKGROUND DASAR (area tepi yang masih putih) ===== */
+html.xu-dark body,
+html.xu-dark body.ult-body,
+html.xu-dark .ult-shell,
+html.xu-dark .ult-main,
+html.xu-dark main.ult-content,
+html.xu-dark .ult-content {
+    background: #0b1220 !important;
+    color: #e2e8f0 !important;
+}
+
+/* ===== 2. TOPBAR ===== */
+html.xu-dark body.xu-pro .ult-topbar {
+    background: rgba(15, 23, 42, .92) !important;
+    border-bottom: 1px solid rgba(5, 150, 105, .2) !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, .45) !important;
+}
+
+html.xu-dark .ult-burger { color: #94a3b8 !important; }
+html.xu-dark .ult-burger:hover { color: #34d399 !important; }
+
+/* Breadcrumb */
+html.xu-dark .xp-breadcrumb,
+html.xu-dark .xp-breadcrumb a { color: #94a3b8 !important; }
+html.xu-dark .xp-breadcrumb a:hover { color: #34d399 !important; }
+html.xu-dark .xp-breadcrumb .current { color: #34d399 !important; }
+
+/* ===== 3. CHIP TOPBAR (search, jam, bell, theme toggle) ===== */
+html.xu-dark .xp-cmd-trigger {
+    background: rgba(255, 255, 255, .06) !important;
+    border-color: rgba(148, 163, 184, .2) !important;
+    color: #94a3b8 !important;
+}
+html.xu-dark .xp-cmd-trigger:hover {
+    background: rgba(255, 255, 255, .1) !important;
+    color: #34d399 !important;
+}
+html.xu-dark .xp-cmd-trigger kbd {
+    background: #1e293b !important;
+    border-color: rgba(148, 163, 184, .3) !important;
+    color: #34d399 !important;
+}
+
+html.xu-dark .xp-time {
+    background: rgba(255, 255, 255, .06) !important;
+    border-color: rgba(148, 163, 184, .2) !important;
+    color: #94a3b8 !important;
+}
+html.xu-dark .xp-time .date { color: #34d399 !important; }
+
+html.xu-dark .xp-bell,
+html.xu-dark .xp-theme-toggle {
+    background: rgba(255, 255, 255, .06) !important;
+    color: #34d399 !important;
+}
+html.xu-dark .xp-bell:hover,
+html.xu-dark .xp-theme-toggle:hover {
+    background: rgba(255, 255, 255, .12) !important;
+    border-color: rgba(5, 150, 105, .3) !important;
+}
+html.xu-dark .xp-bell-badge { border-color: #0f172a !important; }
+
+/* ===== 4. USER MENU DROPDOWN ===== */
+html.xu-dark body.xu-pro .ult-usermenu,
+html.xu-dark .dropdown-menu {
+    background: #1e293b !important;
+    border-color: rgba(5, 150, 105, .25) !important;
+}
+html.xu-dark .dropdown-item { color: #cbd5e1 !important; }
+html.xu-dark body.xu-pro .ult-usermenu .dropdown-item:hover {
+    background: linear-gradient(90deg, rgba(5, 150, 105, .15), transparent) !important;
+    color: #34d399 !important;
+}
+html.xu-dark .dropdown-divider { border-color: rgba(148, 163, 184, .15) !important; }
+
+/* ===== 5. COMMAND PALETTE (Ctrl+K) ===== */
+html.xu-dark .xp-cmd-box { background: #1e293b !important; }
+html.xu-dark .xp-cmd-head {
+    background: rgba(255, 255, 255, .03) !important;
+    border-color: rgba(148, 163, 184, .15) !important;
+}
+html.xu-dark .xp-cmd-input { color: #f1f5f9 !important; }
+html.xu-dark .xp-cmd-input::placeholder { color: #64748b !important; }
+html.xu-dark .xp-cmd-hint {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+}
+html.xu-dark .xp-cmd-item { color: #e2e8f0 !important; }
+html.xu-dark .xp-cmd-item:hover,
+html.xu-dark .xp-cmd-item.active {
+    background: linear-gradient(90deg, rgba(5, 150, 105, .15), rgba(8, 145, 178, .08)) !important;
+}
+html.xu-dark .xp-cmd-item i { background: rgba(5, 150, 105, .15) !important; color: #34d399 !important; }
+html.xu-dark .xp-cmd-foot {
+    background: #0f172a !important;
+    border-color: rgba(148, 163, 184, .15) !important;
+    color: #94a3b8 !important;
+}
+html.xu-dark .xp-cmd-foot kbd {
+    background: #1e293b !important;
+    border-color: rgba(148, 163, 184, .3) !important;
+    color: #cbd5e1 !important;
+}
+html.xu-dark .xp-cmd-empty { color: #94a3b8 !important; }
+
+/* ===== 6. PANEL NOTIFIKASI (BELL) ===== */
+html.xu-dark .xp-notif-panel {
+    background: #1e293b !important;
+    border-color: rgba(5, 150, 105, .25) !important;
+}
+html.xu-dark .xp-notif-head {
+    background: rgba(255, 255, 255, .03) !important;
+    border-color: rgba(148, 163, 184, .15) !important;
+}
+html.xu-dark .xp-notif-head b { color: #f1f5f9 !important; }
+html.xu-dark .xp-notif-head span { color: #94a3b8 !important; }
+html.xu-dark .xp-notif-item { border-color: rgba(148, 163, 184, .1) !important; }
+html.xu-dark .xp-notif-item:hover { background: rgba(5, 150, 105, .1) !important; }
+html.xu-dark .xp-notif-txt .t { color: #e2e8f0 !important; }
+html.xu-dark .xp-notif-txt .d { color: #94a3b8 !important; }
+html.xu-dark .xp-notif-empty { color: #94a3b8 !important; }
+
+/* ===== 7. TOAST NOTIFICATION ===== */
+html.xu-dark .xp-toast {
+    background: #1e293b !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .5) !important;
+}
+html.xu-dark .xp-toast-title { color: #f1f5f9 !important; }
+html.xu-dark .xp-toast-msg { color: #94a3b8 !important; }
+
+/* ===== 8. MOBILE BOTTOM NAV ===== */
+html.xu-dark .xp-mobile-nav {
+    background: rgba(15, 23, 42, .95) !important;
+    border-color: rgba(5, 150, 105, .2) !important;
+}
+html.xu-dark .xp-mobile-nav a { color: #94a3b8 !important; }
+html.xu-dark .xp-mobile-nav a:hover,
+html.xu-dark .xp-mobile-nav a.active { color: #34d399 !important; }
+
+/* ===== 9. SKIP LINK & LOADER (tetap kontras) ===== */
+html.xu-dark .xp-skip { background: #f59e0b; color: #0f172a; }

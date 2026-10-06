@@ -502,6 +502,77 @@
     .xp-notif-empty{padding:36px 20px;text-align:center;color:var(--xp-muted);font-size:.85rem}
     .xp-notif-empty i{display:block;font-size:2rem;color:var(--xp-emerald);margin-bottom:10px}
     </style>
+
+    <!-- Dark Mode CSS (cache-buster agar tidak tertahan cache lama) -->
+    <link rel="stylesheet" href="<?= base_url('assets/custom/css/dark-mode.css') ?>?ver=2">
+
+    <!-- ===== DARK MODE CORE — INLINE, ANTI-CACHE & ANTI-SPECIFICITY ===== -->
+    <style id="xuDarkCore">
+    /* 1. Background dasar: tubuh, shell, area konten */
+    html.xu-dark body,
+    html.xu-dark body.ult-body.xu-pro,
+    html.xu-dark .ult-shell,
+    html.xu-dark .ult-main,
+    html.xu-dark main.ult-content,
+    html.xu-dark .ult-content{
+        background-color:#0b1220 !important;
+        background-image:none !important;
+        color:#e2e8f0 !important;
+    }
+    /* 2. MATIKAN lapisan gradien dekoratif (penyebab tepi putih/keunguan) */
+    html.xu-dark body.xu-pro::before,
+    html.xu-dark body.xu-pro::after,
+    html.xu-dark .ult-main::before,
+    html.xu-dark .ult-main::after,
+    html.xu-dark .ult-content::before,
+    html.xu-dark .ult-content::after{
+        background-image:none !important;
+        background-color:transparent !important;
+    }
+    /* 3. Topbar */
+    html.xu-dark body.xu-pro .ult-topbar,
+    html.xu-dark header.ult-topbar{
+        background-color:rgba(15,23,42,.92) !important;
+        background-image:none !important;
+        border-bottom:1px solid rgba(5,150,105,.2) !important;
+        box-shadow:0 4px 30px rgba(0,0,0,.45) !important;
+    }
+    html.xu-dark .ult-burger{color:#94a3b8 !important}
+    html.xu-dark .xp-breadcrumb,
+    html.xu-dark .xp-breadcrumb a{color:#94a3b8 !important}
+    html.xu-dark .xp-breadcrumb .current{color:#34d399 !important}
+    /* 4. Chip topbar: search, jam, bell, toggle */
+    html.xu-dark .xp-cmd-trigger,
+    html.xu-dark .xp-time,
+    html.xu-dark .xp-bell,
+    html.xu-dark .xp-theme-toggle{
+        background-color:rgba(255,255,255,.06) !important;
+        border-color:rgba(148,163,184,.25) !important;
+        color:#94a3b8 !important;
+    }
+    html.xu-dark .xp-cmd-trigger kbd{background:#1e293b !important;border-color:rgba(148,163,184,.3) !important;color:#34d399 !important}
+    html.xu-dark .xp-time .date{color:#34d399 !important}
+    html.xu-dark .xp-bell,
+    html.xu-dark .xp-theme-toggle{color:#34d399 !important}
+    html.xu-dark .xp-bell-badge{border-color:#0f172a !important}
+    /* 5. Dropdown user & mobile nav */
+    html.xu-dark .dropdown-menu,
+    html.xu-dark body.xu-pro .ult-usermenu{background-color:#1e293b !important;border-color:rgba(5,150,105,.25) !important}
+    html.xu-dark .dropdown-item{color:#cbd5e1 !important}
+    html.xu-dark .dropdown-divider{border-color:rgba(148,163,184,.15) !important}
+    html.xu-dark .xp-mobile-nav{background-color:rgba(15,23,42,.95) !important;border-color:rgba(5,150,105,.2) !important}
+    html.xu-dark .xp-mobile-nav a{color:#94a3b8 !important}
+    </style>
+    <!-- Prevent flash: apply dark class ASAP -->
+    <script>
+        (function(){
+            var mode = localStorage.getItem('rangkui_dark_mode');
+            if (mode === 'dark' || (!mode && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('xu-dark');
+            }
+        })();
+    </script>
+
 </head>
 
 <body class="nav-md ult-body xu-pro">
@@ -700,9 +771,9 @@
                     <span class="clock">--:--</span>
                 </div>
 
-                <button class="xp-theme-toggle" id="xpThemeBtn" title="Mode gelap (segera hadir)">
-                    <i class="fa fa-moon-o"></i>
-                </button>
+               <button class="xp-theme-toggle" id="xpThemeBtn" title="Toggle Dark Mode">
+               <i class="fa fa-moon-o" id="xpThemeIcon"></i>
+               </button>
 
                 <div class="xp-bell-wrap" style="position:relative">
                     <div class="xp-bell" id="xpBell" title="Notifikasi">
@@ -1036,10 +1107,61 @@
             if (!e.target.closest('.xp-bell-wrap')) xpPanel.classList.remove('open');
         });
 
-        // ===== THEME TOGGLE =====
-        document.getElementById('xpThemeBtn').addEventListener('click', function(){
-            showXpToast('Mode Gelap', 'Segera hadir di versi 4.2.0 Rangkui!', 'success');
-        });
+        // ===== THEME TOGGLE (Dark Mode) =====
+        var xpThemeBtn = document.getElementById('xpThemeBtn');
+        var xpThemeIcon = document.getElementById('xpThemeIcon');
+        var DARK_KEY = 'rangkui_dark_mode';
+
+        function updateThemeUI(mode) {
+            if (!xpThemeIcon) return;
+            if (mode === 'dark') {
+                xpThemeIcon.className = 'fa fa-sun-o';
+                xpThemeBtn.title = 'Switch to Light Mode';
+            } else {
+                xpThemeIcon.className = 'fa fa-moon-o';
+                xpThemeBtn.title = 'Switch to Dark Mode';
+            }
+        }
+
+        function toggleTheme() {
+            var isDark = document.documentElement.classList.contains('xu-dark');
+            var newMode = isDark ? 'light' : 'dark';
+            document.documentElement.classList.toggle('xu-dark', !isDark);
+            localStorage.setItem(DARK_KEY, newMode);
+            updateThemeUI(newMode);
+            showXpToast(
+                newMode === 'dark' ? '🌙 Mode Gelap Aktif' : '☀️ Mode Terang Aktif',
+                'Preferensi tersimpan untuk kunjungan berikutnya.',
+                'success'
+            );
+        }
+
+        if (xpThemeBtn) {
+            // Sync UI dengan mode saat ini (sudah di-apply oleh inline script di <head>)
+            var currentMode = document.documentElement.classList.contains('xu-dark') ? 'dark' : 'light';
+            updateThemeUI(currentMode);
+
+            xpThemeBtn.addEventListener('click', toggleTheme);
+
+            // Sync antar tab
+            window.addEventListener('storage', function(e) {
+                if (e.key === DARK_KEY && e.newValue) {
+                    document.documentElement.classList.toggle('xu-dark', e.newValue === 'dark');
+                    updateThemeUI(e.newValue);
+                }
+            });
+
+            // Auto-detect OS preference change (jika user belum set manual)
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                    if (!localStorage.getItem(DARK_KEY)) {
+                        var mode = e.matches ? 'dark' : 'light';
+                        document.documentElement.classList.toggle('xu-dark', e.matches);
+                        updateThemeUI(mode);
+                    }
+                });
+            }
+        }
 
         // ===== TOAST =====
         window.showXpToast = function(title, msg, type){
@@ -1067,5 +1189,4 @@
     })();
     </script>
 </body>
-
 </html>    <?php $session = session(); ?>
