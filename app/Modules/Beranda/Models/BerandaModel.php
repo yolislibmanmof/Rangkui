@@ -443,4 +443,160 @@ class BerandaModel extends BaseModel
 
         return $result;
     }
+
+    /**
+     * ✅ RICH SEARCH: kembalikan dokumen + metadata lengkap untuk AI context
+     */
+    public function ai_search_rich($query, $limit = 6)
+    {
+        $db = \Config\Database::connect();
+        $q = trim($query);
+        if ($q === '') return [];
+
+        $keywords = preg_split('/\s+/', $q);
+        $keywords = array_filter($keywords, fn($w) => strlen($w) > 2);
+
+        $builder = $db->table('biblio b')
+            ->select('b.biblio_id, b.title, b.notes, b.publish_year, b.departement, 
+                      b.student_id, b.classification, b.collation, b.input_date,
+                      g.gmd_name,
+                      (SELECT GROUP_CONCAT(a.author_name SEPARATOR ", ") 
+                       FROM biblio_author ba 
+                       JOIN mst_author a ON ba.author_id = a.author_id 
+                       WHERE ba.biblio_id = b.biblio_id) AS authors,
+                      (SELECT GROUP_CONCAT(sv.supervisor_name SEPARATOR ", ") 
+                       FROM biblio_supervisor bs 
+                       JOIN mst_supervisor sv ON bs.supervisor_id = sv.supervisor_id 
+                       WHERE bs.biblio_id = b.biblio_id) AS supervisors,
+                      (SELECT GROUP_CONCAT(t.topic SEPARATOR ", ") 
+                       FROM biblio_topic bt 
+                       JOIN mst_topic t ON bt.topic_id = t.topic_id 
+                       WHERE bt.biblio_id = b.biblio_id) AS topics')
+            ->join('mst_gmd g', 'b.gmd_id = g.gmd_id', 'left')
+            ->where('b.opac_hide', 0);
+
+        $searchTerms = array_map(fn($k) => '%' . $db->escapeLikeString($k) . '%', $keywords);
+
+        $builder->groupStart();
+        foreach ($searchTerms as $term) {
+            $builder->orGroupStart()
+                ->like('b.title', $term)
+                ->orLike('b.notes', $term)
+                ->orLike('b.departement', $term)
+                ->groupEnd();
+        }
+        $builder->groupEnd();
+
+        return $builder->orderBy('b.input_date', 'DESC')->limit($limit)->get()->getResult();
+    }
+
+    /**
+     * ✅ STATS: jawab pertanyaan analitik (tren, top authors, dll)
+     */
+    public function ai_stats()
+    {
+        $db = \Config\Database::connect();
+
+        $topAuthors = $db->query("
+            SELECT a.author_name, COUNT(ba.biblio_id) as total_karya
+            FROM biblio_author ba 
+            JOIN mst_author a ON ba.author_id = a.author_id
+            JOIN biblio b ON ba.biblio_id = b.biblio_id AND b.opac_hide = 0
+            GROUP BY a.author_id, a.author_name
+            ORDER BY total_karya DESC LIMIT 10
+        ")->getResultArray();
+
+        $yearTrend = $db->query("
+            SELECT publish_year, COUNT(*) as total
+            FROM biblio
+            WHERE publish_year >= YEAR(CURDATE()) - 5
+              AND opac_hide = 0
+              AND publish_year IS NOT NULL
+            GROUP BY publish_year
+            ORDER BY publish_year ASC
+        ")->getResultArray();
+
+        $topDept = $db->query("
+            SELECT departement, COUNT(*) as total
+            FROM biblio
+            WHERE departement IS NOT NULL AND departement != ''
+              AND opac_hide = 0
+            GROUP BY departement
+            ORDER BY total DESC LIMIT 10
+        ")->getResultArray();
+
+        return [
+            'total_docs'       => (int) $db->table('biblio')->where('opac_hide', 0)->countAllResults(),
+            'total_authors'    => $topAuthors ?: [],
+            'year_trend'       => $yearTrend,
+            'top_departments'  => $topDept,
+            'latest_year'      => !empty($yearTrend) ? max(array_column($yearTrend, 'publish_year')) : date('Y')
+        ];
+    }
+
+    /**
+     * ✅ FIND BY ID/NIM/NAMA: untuk pertanyaan "dokumen #X" atau "karya NIM Y"
+     */
+    public function ai_find_specific($query)
+    {
+        $db = \Config\Database::connect();
+        $results = [];
+
+        // Pola 1: "dokumen #123" atau "id 123"
+        if (preg_match('/(?:#|id\s*|biblio\s*)(\d+)/i', $query, $m)) {
+            $id = (int) $m[1];
+            if ($id > 0) {
+                $doc = $db->table('biblio b')
+                    ->select('b.biblio_id, b.title, b.publish_year, b.departement, b.student_id, b.notes,
+                        (SELECT GROUP_CONCAT(a.author_name SEPARATOR ", ") 
+                         FROM biblio_author ba JOIN mst_author a ON ba.author_id = a.author_id 
+                         WHERE ba.biblio_id = b.biblio_id) AS authors,
+                        (SELECT GROUP_CONCAT(sv.supervisor_name SEPARATOR ", ") 
+                         FROM biblio_supervisor bs JOIN mst_supervisor sv ON bs.supervisor_id = sv.supervisor_id 
+                         WHERE bs.biblio_id = b.biblio_id) AS supervisors,
+                        (SELECT GROUP_CONCAT(t.topic SEPARATOR ", ") 
+                         FROM biblio_topic bt JOIN mst_topic t ON bt.topic_id = t.topic_id 
+                         WHERE bt.biblio_id = b.biblio_id) AS topics')
+                    ->where('b.biblio_id', $id)
+                    ->where('b.opac_hide', 0)
+                    ->get()->getRow();
+                if ($doc) $results[] = $doc;
+            }
+        }
+
+        // Pola 2: "NIM 01023621722004"
+        if (preg_match('/NIM\s*(\d{8,20})/i', $query, $m)) {
+            $nim = $m[1];
+            $docs = $db->table('biblio b')
+                ->select('b.biblio_id, b.title, b.publish_year, b.departement, b.student_id, b.notes,
+                    (SELECT GROUP_CONCAT(a.author_name SEPARATOR ", ") 
+                     FROM biblio_author ba JOIN mst_author a ON ba.author_id = a.author_id 
+                     WHERE ba.biblio_id = b.biblio_id) AS authors,
+                    (SELECT GROUP_CONCAT(sv.supervisor_name SEPARATOR ", ") 
+                     FROM biblio_supervisor bs JOIN mst_supervisor sv ON bs.supervisor_id = sv.supervisor_id 
+                     WHERE bs.biblio_id = b.biblio_id) AS supervisors')
+                ->where('b.student_id', $nim)
+                ->where('b.opac_hide', 0)
+                ->limit(5)->get()->getResult();
+            foreach ($docs as $d) $results[] = $d;
+        }
+
+        // Pola 3: "karya dari [nama]"
+        if (preg_match('/(?:karya|tulisan|riset)\s+(?:dari|oleh)\s+([A-Za-z\s]+)/i', $query, $m)) {
+            $authorName = trim($m[1]);
+            $docs = $db->query("
+                SELECT DISTINCT b.biblio_id, b.title, b.publish_year, b.departement, b.notes,
+                    GROUP_CONCAT(DISTINCT a.author_name SEPARATOR ', ') AS authors
+                FROM biblio b
+                JOIN biblio_author ba ON b.biblio_id = ba.biblio_id
+                JOIN mst_author a ON ba.author_id = a.author_id
+                WHERE a.author_name LIKE ? AND b.opac_hide = 0
+                GROUP BY b.biblio_id
+                LIMIT 5
+            ", ['%' . $authorName . '%'])->getResult();
+            foreach ($docs as $d) $results[] = $d;
+        }
+
+        return $results;
+    }
 }
