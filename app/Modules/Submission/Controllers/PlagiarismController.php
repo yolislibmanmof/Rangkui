@@ -34,7 +34,7 @@ class PlagiarismController extends BaseController
         $lulus  = (int) $db->table('xu_plagiarism_checks')->where('status', 'lulus')->countAllResults();
         $avgRow = $db->table('xu_plagiarism_checks')->selectAvg('similarity_score')->get()->getRow();
 
-        _renderView('v_plagiarism_audit', 'Audit Gerbang Plagiarisme', [
+                _render('v_plagiarism_audit', 'Audit Gerbang Plagiarisme', [
             'total' => $total,
             'lulus' => $lulus,
             'gagal' => $total - $lulus,
