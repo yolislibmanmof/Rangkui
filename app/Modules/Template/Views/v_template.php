@@ -504,7 +504,7 @@
     </style>
 
     <!-- Dark Mode CSS (cache-buster agar tidak tertahan cache lama) -->
-    <link rel="stylesheet" href="<?= base_url('assets/custom/css/dark-mode.css') ?>?ver=2">
+    
 
     <!-- ===== DARK MODE CORE — INLINE, ANTI-CACHE & ANTI-SPECIFICITY ===== -->
     <style id="xuDarkCore">

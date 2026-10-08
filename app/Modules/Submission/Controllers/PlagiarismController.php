@@ -223,14 +223,20 @@ class PlagiarismController extends BaseController
         $baseSql = "
             SELECT b.biblio_id, f.file_name, f.file_dir
             FROM biblio b
-            JOIN biblio_attachment ba ON ba.biblio_id = b.biblio_id
-            JOIN files f ON f.file_id = ba.file_id
-            WHERE b.opac_hide = 0 AND f.file_name LIKE '%.pdf'
+            JOIN (
+                SELECT ba.biblio_id, MAX(ba.file_id) AS file_id
+                FROM biblio_attachment ba
+                JOIN files f2 ON f2.file_id = ba.file_id
+                WHERE f2.file_name LIKE '%.pdf'
+                GROUP BY ba.biblio_id
+            ) latest ON latest.biblio_id = b.biblio_id
+            JOIN files f ON f.file_id = latest.file_id
+            WHERE b.opac_hide = 0
         ";
         if (!$force) {
             $baseSql .= " AND b.biblio_id NOT IN (SELECT biblio_id FROM xu_plagiarism_fingerprints)";
         }
-        $baseSql .= " GROUP BY b.biblio_id ORDER BY b.biblio_id ASC";
+        $baseSql .= " ORDER BY b.biblio_id ASC";
 
         $total = count($db->query($baseSql)->getResult());
         $docs  = $db->query($baseSql . " LIMIT {$batch} OFFSET {$offset}")->getResult();
