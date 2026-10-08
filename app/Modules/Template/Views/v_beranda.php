@@ -451,7 +451,7 @@
     <div class="xp-reading-bubble" id="xpReadingBubble">0%</div>
     <div class="xp-cursor-glow" id="xpCursorGlow"></div>
     <div class="xp-preloader" id="xpPreloader">
-        <div class="xp-preloader-logo">REPOSITORI UNIMOF</div>
+        <div class="xp-preloader-logo">DIFOSS RANGKUI</div>
         <div class="xp-preloader-bar"></div>
         <div class="xp-preloader-sub">Digital Repository For Every One</div>
     </div>
