@@ -495,6 +495,55 @@
                                                 <strong id="sumGmd">-</strong>
                                             </div>
                                         </div>
+                                        <!-- ✅ BARU: Row untuk Gate Token -->
+                                        <div class="xu-summary-row">
+                                            <div class="xu-summary-icon" style="background:rgba(251,191,36,0.15);color:var(--xu-gold);">
+                                                <i class="fa fa-shield"></i>
+                                            </div>
+                                            <div class="xu-summary-content">
+                                                <small>Token Similaritas</small>
+                                                <strong id="sumGate" style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--xu-text-muted);">⚠ Belum diisi</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ===== 🔬 PLAGIARISM GATE TOKEN ===== -->
+                                    <div class="xu-gate-section">
+                                        <div class="xu-gate-header">
+                                            <div class="xu-gate-icon">
+                                                <i class="fa fa-shield"></i>
+                                            </div>
+                                            <div>
+                                                <h4>Gerbang Plagiarisme <span class="xu-required">*</span></h4>
+                                                <p>Token ini membuktikan dokumen Anda telah lolos cek similaritas</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="xu-input-group">
+                                            <input type="text" 
+                                                   name="gate_token" 
+                                                   id="gate_token" 
+                                                   required
+                                                   minlength="32"
+                                                   maxlength="64"
+                                                   value="<?= old('gate_token') ?>" 
+                                                   placeholder=" "
+                                                   style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;letter-spacing:0.05em;">
+                                            <label for="gate_token">
+                                                <i class="fa fa-ticket"></i> Token Cek Similaritas <span class="xu-required">*</span>
+                                            </label>
+                                            <div class="xu-input-underline"></div>
+                                            <div class="xu-gate-actions">
+                                                <small class="xu-hint">
+                                                    Belum punya token? 
+                                                    <a href="<?= base_url('cek-similaritas') ?>" target="_blank" class="xu-gate-link">
+                                                        <i class="fa fa-external-link"></i> Scan dokumen Anda di sini
+                                                    </a>
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="xu-gate-status" id="gateStatus"></div>
                                     </div>
 
                                     <div class="xu-disclaimer">
@@ -1524,6 +1573,103 @@
 }
 .xu-chip button:hover { color: white; background: var(--xu-red); border-radius: 50%; width: 16px; height: 16px; }
 
+/* ============ GATE TOKEN SECTION ============ */
+.xu-gate-section {
+    background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(251,191,36,0.08));
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.xu-gate-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--xu-emerald), var(--xu-gold));
+    animation: xu-shimmer 3s infinite;
+}
+
+.xu-gate-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.xu-gate-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--xu-emerald), var(--xu-gold));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    box-shadow: var(--xu-glow-emerald);
+}
+
+.xu-gate-header h4 {
+    color: var(--xu-text);
+    margin: 0 0 2px;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.xu-gate-header p {
+    color: var(--xu-text-muted);
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.xu-gate-actions {
+    margin-top: 8px;
+    padding-left: 4px;
+}
+
+.xu-gate-link {
+    color: var(--xu-gold);
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.xu-gate-link:hover {
+    color: var(--xu-gold-dark);
+    text-decoration: underline;
+}
+
+.xu-gate-status {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.xu-gate-status.valid {
+    display: flex;
+    background: rgba(16,185,129,0.15);
+    color: var(--xu-emerald);
+    border: 1px solid rgba(16,185,129,0.3);
+}
+
+.xu-gate-status.invalid {
+    display: flex;
+    background: rgba(225,29,72,0.15);
+    color: var(--xu-red);
+    border: 1px solid rgba(225,29,72,0.3);
+}
+
 /* ============ RESPONSIVE ============ */
 @media (max-width: 768px) {
     .xu-ultimate-card { padding: 24px; border-radius: 20px; }
@@ -1665,6 +1811,34 @@
                 return false;
             }
         }
+
+        // ===== ✅ VALIDASI BARU: GATE TOKEN (STEP 4) =====
+        if (step === 4) {
+            const gateEl = document.getElementById('gate_token');
+            
+            // Cek 1: Token wajib diisi
+            if (!gateEl || !gateEl.value || gateEl.value.trim().length === 0) {
+                showToast('Token cek similaritas wajib diisi. Scan dokumen Anda di halaman Cek Similaritas terlebih dahulu.', 'error', 6000);
+                if (gateEl) gateEl.focus();
+                return false;
+            }
+            
+            // Cek 2: Panjang minimal 32 karakter
+            const tokenVal = gateEl.value.trim();
+            if (tokenVal.length < 32) {
+                showToast(`Token terlalu pendek (${tokenVal.length}/32 karakter). Pastikan Anda menyalin token lengkap.`, 'error', 5000);
+                gateEl.focus();
+                return false;
+            }
+            
+            // Cek 3: Format harus hex alphanumeric (a-f, 0-9)
+            if (!/^[a-f0-9]{32,64}$/i.test(tokenVal)) {
+                showToast('Format token tidak valid. Token harus terdiri dari karakter hex (0-9, a-f).', 'error', 5000);
+                gateEl.focus();
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -2068,6 +2242,49 @@
         }
         animate();
     }
+
+    // ============ GATE TOKEN: REAL-TIME VALIDATION ============
+    const gateInput = document.getElementById('gate_token');
+    const gateStatus = document.getElementById('gateStatus');
+
+    if (gateInput && gateStatus) {
+        gateInput.addEventListener('input', function() {
+            const val = this.value.trim();
+            gateStatus.className = 'xu-gate-status';
+            
+            if (!val) {
+                gateStatus.style.display = 'none';
+                return;
+            }
+            
+            if (val.length < 32) {
+                gateStatus.className = 'xu-gate-status invalid';
+                gateStatus.innerHTML = '<i class="fa fa-info-circle"></i> Token terlalu pendek (' + val.length + '/32 karakter)';
+            } else if (!/^[a-f0-9]{32,64}$/i.test(val)) {
+                gateStatus.className = 'xu-gate-status invalid';
+                gateStatus.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Format token tidak valid (harus karakter hex)';
+            } else {
+                gateStatus.className = 'xu-gate-status valid';
+                gateStatus.innerHTML = '<i class="fa fa-check-circle"></i> Format token valid — akan diverifikasi saat submit';
+            }
+            
+            // Update summary juga
+            const sumGate = document.getElementById('sumGate');
+            if (sumGate) {
+                if (!val) {
+                    sumGate.textContent = '⚠ Belum diisi';
+                    sumGate.style.color = 'var(--xu-text-muted)';
+                } else if (val.length < 32 || !/^[a-f0-9]{32,64}$/i.test(val)) {
+                    sumGate.textContent = '⚠ Format salah';
+                    sumGate.style.color = 'var(--xu-red)';
+                } else {
+                    sumGate.textContent = '✓ ' + val.substring(0, 8) + '... (' + val.length + ' char)';
+                    sumGate.style.color = 'var(--xu-emerald)';
+                }
+            }
+        });
+    }
+
 
     // Init
     const initTitle = document.getElementById('title');

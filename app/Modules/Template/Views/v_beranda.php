@@ -255,6 +255,7 @@
     .xuJelajah .xuJIco.jt{background:linear-gradient(135deg,var(--xp-gold),var(--xp-emerald))}
     .xuJelajah .xuJIco.jp{background:linear-gradient(135deg,var(--xp-emerald),var(--xp-gold))}
     .xuJelajah .xuJIco.js{background:linear-gradient(135deg,var(--xp-teal),var(--xp-emerald))}
+    .xuJelajah .xuJIco.jc{background:linear-gradient(135deg,#10b981,#f59e0b)}
     .xuJelajah small{display:block;color:rgba(255,255,255,.45);font-weight:500;font-size:.68rem;margin-top:2px;letter-spacing:.02em}
     .xuSocial{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);margin:0 5px;transition:.35s;overflow:hidden;position:relative}
     .xuSocial img{width:24px;height:24px;transition:.35s;position:relative;z-index:1}
@@ -558,14 +559,22 @@
                         <li class="nav-item"><a class="nav-link" href="<?= base_url() ?>"><i class="fa fa-home"></i>Beranda</a></li>
                         <li class="nav-item"><a class="nav-link" href="<?= base_url('information') ?>"><i class="fa fa-info-circle"></i>Informasi</a></li>
 
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown"><i class="fa fa-compass"></i>Jelajah</a>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="<?= base_url('beranda/galaxy') ?>">🌌 Galaksi Riset</a>
-                                <a class="dropdown-item" href="<?= base_url('beranda/rak') ?>">📚 Rak 3D</a>
-                                <a class="dropdown-item" href="<?= base_url('beranda/ai') ?>">🤖 AI Asisten</a>
-                            </div>
-                        </li>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown"><i class="fa fa-compass"></i>Jelajah</a>
+    <div class="dropdown-menu">
+        <a class="dropdown-item" href="<?= base_url('beranda/galaxy') ?>">🌌 Galaksi Riset</a>
+        <a class="dropdown-item" href="<?= base_url('beranda/rak') ?>">📚 Rak 3D</a>
+        <a class="dropdown-item" href="<?= base_url('beranda/ai') ?>">🤖 AI Asisten</a>
+        <div class="dropdown-divider" style="border-color:rgba(5,150,105,.12);margin:4px 0"></div>
+        <a class="dropdown-item" href="<?= base_url('unggah') ?>" style="color:var(--xp-gold)">
+            <i class="fa fa-cloud-upload" style="color:var(--xp-gold);margin-right:4px"></i> Unggah Karya
+        </a>
+        <a class="dropdown-item" href="<?= base_url('cek-similaritas') ?>" style="color:var(--xp-emerald)">
+            <i class="fa fa-shield" style="color:var(--xp-emerald);margin-right:4px"></i> Cek Similaritas
+            <span style="margin-left:auto;padding:2px 7px;border-radius:999px;background:linear-gradient(90deg,#f59e0b,#ef4444);color:#fff;font-size:.6rem;font-weight:800;letter-spacing:.05em;">NEW</span>
+        </a>
+    </div>
+</li>
 
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown"><i class="fa fa-link"></i>Link</a>
@@ -595,11 +604,6 @@
                             </div>
                         </li>
 
-                        <li class="nav-item">
-    <a class="nav-link" href="<?= base_url('unggah') ?>">
-        <i class="fa fa-cloud-upload"></i>Unggah Karya
-    </a>
-</li>
 
                             <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown"><i class="fa fa-video-camera"></i>Video</a>
@@ -666,14 +670,15 @@
 
                     <div class="col-lg-3 col-md-6 mb-4">
                         <h3 class="h-explore"><span class="xuH3Ico"><i class="fa fa-compass"></i></span> Jelajah</h3>
-                        <div class="xuJelajah">
-                            <a href="<?= base_url('beranda/galaxy') ?>"><span class="xuJIco jg"><i class="fa fa-star"></i></span><div>Galaksi Riset<small>Peta ilmu</small></div></a>
-                            <a href="<?= base_url('beranda/rak') ?>"><span class="xuJIco jr"><i class="fa fa-cube"></i></span><div>Rak 3D<small>Perpustakaan</small></div></a>
-                            <a href="<?= base_url('beranda/ai') ?>"><span class="xuJIco ja"><i class="fa fa-robot"></i></span><div>AI Asisten<small>Cerdas</small></div></a>
-                            <a href="<?= base_url('information') ?>"><span class="xuJIco jt"><i class="fa fa-info-circle"></i></span><div>Informasi<small>Perpustakaan</small></div></a>
-                            <a href="<?= base_url('beranda/search') ?>"><span class="xuJIco jp"><i class="fa fa-search"></i></span><div>Pencarian<small>Dokumen</small></div></a>
-                            <a href="https://setiadifoss.org" target="_blank"><span class="xuJIco js"><i class="fa fa-globe"></i></span><div>DIFOSS<small>Situs resmi</small></div></a>
-                        </div>
+<div class="xuJelajah">
+    <a href="<?= base_url('beranda/galaxy') ?>"><span class="xuJIco jg"><i class="fa fa-star"></i></span><div>Galaksi Riset<small>Peta ilmu</small></div></a>
+    <a href="<?= base_url('beranda/rak') ?>"><span class="xuJIco jr"><i class="fa fa-cube"></i></span><div>Rak 3D<small>Perpustakaan</small></div></a>
+    <a href="<?= base_url('beranda/ai') ?>"><span class="xuJIco ja"><i class="fa fa-robot"></i></span><div>AI Asisten<small>Cerdas</small></div></a>
+    <a href="<?= base_url('cek-similaritas') ?>"><span class="xuJIco jc"><i class="fa fa-shield"></i></span><div>Cek Similaritas<small style="color:var(--xp-gold)">🔥 Baru!</small></div></a>
+    <a href="<?= base_url('information') ?>"><span class="xuJIco jt"><i class="fa fa-info-circle"></i></span><div>Informasi<small>Perpustakaan</small></div></a>
+    <a href="<?= base_url('beranda/search') ?>"><span class="xuJIco jp"><i class="fa fa-search"></i></span><div>Pencarian<small>Dokumen</small></div></a>
+    <a href="https://setiadifoss.org" target="_blank"><span class="xuJIco js"><i class="fa fa-globe"></i></span><div>DIFOSS<small>Situs resmi</small></div></a>
+</div>
                     </div>
 
                     <div class="col-lg-3 col-md-6 mb-4">
@@ -729,12 +734,12 @@
         <div class="xp-ai-body" id="xpAiBody">
             <div class="xp-ai-msg bot">Halo! 👋 Saya AI Asisten REPO UNIMOF. Ada yang bisa saya bantu tentang koleksi atau fitur repositori?</div>
         </div>
-        <div class="xp-ai-quick">
-            <button type="button" data-q="Cara mencari dokumen?">🔍 Cara mencari</button>
-            <button type="button" data-q="Apa itu Galaksi Riset?">🌌 Galaksi Riset</button>
-            <button type="button" data-q="Bagaimana cara mendaftar?">📝 Daftar</button>
-            <button type="button" data-q="Fitur Integrity Scanner?">🛡️ Integrity</button>
-        </div>
+<div class="xp-ai-quick">
+    <button type="button" data-q="Cara mencari dokumen?">🔍 Cara mencari</button>
+    <button type="button" data-q="Cek similaritas plagiarisme">🛡️ Cek Similaritas</button>
+    <button type="button" data-q="Cara unggah karya ilmiah">📤 Unggah</button>
+    <button type="button" data-q="Apa itu Galaksi Riset?">🌌 Galaksi</button>
+</div>
         <div class="xp-ai-foot">
             <input type="text" class="xp-ai-input" id="xpAiInput" placeholder="Ketik pertanyaan Anda...">
             <button class="xp-ai-send" id="xpAiSend"><i class="fa fa-paper-plane"></i></button>
@@ -874,16 +879,18 @@
       var sIn = document.getElementById('xpSearchInput');
       var sRes = document.getElementById('xpSearchResults');
       var sAct = 0;
-      var XP_PAGES = [
-        {title:'Beranda', icon:'fa-home', url:'', meta:'Halaman utama'},
-        {title:'Informasi', icon:'fa-info-circle', url:'information', meta:'Tentang perpustakaan'},
-        {title:'Galaksi Riset', icon:'fa-star', url:'beranda/galaxy', meta:'Peta visual ilmu'},
-        {title:'Rak 3D', icon:'fa-cube', url:'beranda/rak', meta:'Perpustakaan virtual'},
-        {title:'AI Asisten', icon:'fa-robot', url:'beranda/ai', meta:'Chatbot cerdas'},
-        {title:'Pencarian', icon:'fa-search', url:'beranda/search', meta:'Cari dokumen'},
-        {title:'Pendaftaran Anggota', icon:'fa-id-card', url:'daftar', meta:'Daftar gratis'},
-        {title:'DIFOSS Official', icon:'fa-globe', url:'https://setiadifoss.org', meta:'Situs resmi', external:true}
-      ];
+var XP_PAGES = [
+    {title:'Beranda', icon:'fa-home', url:'', meta:'Halaman utama'},
+    {title:'Informasi', icon:'fa-info-circle', url:'information', meta:'Tentang perpustakaan'},
+    {title:'Galaksi Riset', icon:'fa-star', url:'beranda/galaxy', meta:'Peta visual ilmu'},
+    {title:'Rak 3D', icon:'fa-cube', url:'beranda/rak', meta:'Perpustakaan virtual'},
+    {title:'AI Asisten', icon:'fa-robot', url:'beranda/ai', meta:'🤖 Chatbot cerdas hybrid'},
+    {title:'Cek Similaritas', icon:'fa-shield', url:'cek-similaritas', meta:'🔬 Gerbang plagiarisme'},
+    {title:'Unggah Karya', icon:'fa-cloud-upload', url:'unggah', meta:'📤 Submit tugas akhir'},
+    {title:'Pencarian', icon:'fa-search', url:'beranda/search', meta:'Cari dokumen'},
+    {title:'Pendaftaran Anggota', icon:'fa-id-card', url:'daftar', meta:'Daftar gratis'},
+    {title:'DIFOSS Official', icon:'fa-globe', url:'https://setiadifoss.org', meta:'Situs resmi', external:true}
+];
       function openSearch(){ sOv.classList.add('open'); sIn.value=''; renderSearch(''); setTimeout(function(){ sIn.focus(); },50); }
       function closeSearch(){ sOv.classList.remove('open'); }
       function renderSearch(q){
@@ -1021,14 +1028,17 @@
 
       // AI ASSISTANT
       var aiF=document.getElementById('xpAiFab'), aiP=document.getElementById('xpAiPanel'), aiC=document.getElementById('xpAiClose'), aiB=document.getElementById('xpAiBody'), aiI=document.getElementById('xpAiInput'), aiS=document.getElementById('xpAiSend');
-      var AI_RESP = {
-        'cara mencari':'Untuk mencari dokumen, gunakan ikon 🔍 di navbar atau tekan Ctrl+K. Anda bisa cari berdasarkan judul, penulis, atau kata kunci topik.',
-        'galaksi riset':'🌌 Galaksi Riset adalah peta visual interaktif yang menampilkan hubungan antar topik penelitian di repositori kami.',
-        'mendaftar':'Klik "Pendaftaran Anggota" di menu Link atau kunjungi halaman daftar. Prosesnya gratis dan hanya butuh 2 menit!',
-        'integrity':'🛡️ Integrity Scanner adalah fitur khusus admin untuk mendeteksi plagiarisme dan tulisan AI secara otomatis.',
-        'halo':'Halo juga! Senang bisa membantu. Ada pertanyaan spesifik tentang koleksi atau fitur kami?',
-        'terima kasih':'Sama-sama! 😊 Jangan ragu bertanya lagi kapan saja.'
-      };
+var AI_RESP = {
+    'cara mencari':'Untuk mencari dokumen, gunakan ikon 🔍 di navbar atau tekan Ctrl+K. Anda bisa cari berdasarkan judul, penulis, atau kata kunci topik.',
+    'galaksi riset':'🌌 Galaksi Riset adalah peta visual interaktif yang menampilkan hubungan antar topik penelitian di repositori kami.',
+    'mendaftar':'Klik "Pendaftaran Anggota" di menu Link atau kunjungi halaman daftar. Prosesnya gratis dan hanya butuh 2 menit!',
+    'integrity':'🛡️ Integrity Scanner adalah fitur khusus admin untuk mendeteksi plagiarisme dan tulisan AI secara otomatis.',
+    'similaritas':'🔬 Cek Similaritas adalah fitur publik GRATIS untuk mahasiswa! Scan dokumen Anda di menu Jelajah → Cek Similaritas sebelum submit tugas akhir. Hasil instan + saran perbaikan AI.',
+    'plagiarisme':'Untuk cek plagiarisme mandiri, kunjungi halaman Cek Similaritas (menu Jelajah). Gratis, instan, dan dokumen Anda tidak disimpan permanen.',
+    'unggah':'Untuk unggah karya ilmiah, klik tombol "Unggah Karya" di navbar. Anda akan dipandu dengan AI extractor metadata + gerbang similaritas otomatis.',
+    'halo':'Halo juga! 👋 Senang bisa membantu. Ada pertanyaan spesifik tentang koleksi atau fitur kami?',
+    'terima kasih':'Sama-sama! 😊 Jangan ragu bertanya lagi kapan saja.'
+};
       function aiRespond(m){
         var l=m.toLowerCase(), r='Terima kasih atas pertanyaannya! Silakan cek menu Informasi untuk panduan lengkap.';
         for (var k in AI_RESP) if (l.indexOf(k)!==-1){ r=AI_RESP[k]; break; }

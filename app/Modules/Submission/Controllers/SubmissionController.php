@@ -42,7 +42,7 @@ class SubmissionController extends BaseController
      */
     public function proses()
     {
-        // Validasi input
+        // Validasi input (termasuk gate_token wajib untuk Plagiarism Gate)
         $rules = [
             'student_name' => 'required|min_length[3]',
             'student_id'   => 'required|min_length[5]',
@@ -50,7 +50,8 @@ class SubmissionController extends BaseController
             'title'        => 'required|min_length[10]',
             'year'         => 'required|integer',
             'notes'        => 'required|min_length[50]',
-            'file_pdf'     => 'uploaded[file_pdf]|mime_in[file_pdf,application/pdf]|max_size[file_pdf,20480]'
+            'file_pdf'     => 'uploaded[file_pdf]|mime_in[file_pdf,application/pdf]|max_size[file_pdf,20480]',
+            'gate_token'   => 'required|min_length[32]'
         ];
 
         if (!$this->validate($rules)) {
@@ -60,7 +61,26 @@ class SubmissionController extends BaseController
         }
 
         $postData = $this->request->getPost();
-        
+
+        // ===== 🔬 PLAGIARISM GATE: VERIFIKASI TOKEN PRA-APPROVAL =====
+        $gateToken = trim($postData['gate_token'] ?? '');
+        if (empty($gateToken)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Token cek similaritas wajib diisi. Silakan scan dokumen Anda di <a href="' . base_url('cek-similaritas') . '" target="_blank">halaman Cek Similaritas</a> terlebih dahulu.');
+        }
+
+        // Verifikasi token valid & belum kedaluwarsa
+        $gate = \App\Modules\Submission\Controllers\PlagiarismController::verifyToken($gateToken);
+        if (!$gate) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Token cek similaritas tidak valid, kedaluwarsa, atau hasil scan menunjukkan similarity di atas ambang batas. Silakan <a href="' . base_url('cek-similaritas') . '" target="_blank">scan ulang</a> dokumen Anda.');
+        }
+
+        // Ambil similarity score dari token untuk audit trail
+        $gateScore = (float) $gate->similarity_score;
+
         // Cek duplikasi (Mencegah spam double-submit dalam 5 menit)
         if ($this->submissionModel->isDuplicate($postData['title'], $postData['student_id'])) {
             return redirect()->to('/unggah/sukses');
@@ -116,14 +136,14 @@ class SubmissionController extends BaseController
             'access_limit' => 0
         ]);
 
-        // Catat submission
+        // Catat submission + simpan similarity score untuk audit trail admin
         $this->submissionModel->createSubmission([
             'biblio_id'     => $biblio_id,
             'member_id'     => $this->session->get('member_id') ?? $postData['student_id'],
             'student_name'  => $postData['student_name'],
             'current_stage' => 'admin',
             'status'        => 'menunggu',
-            'note'          => 'Menunggu verifikasi admin',
+            'note'          => 'Menunggu verifikasi admin. Similarity: ' . $gateScore . '% (token: ' . substr($gateToken, 0, 8) . '...)',
         ]);
 
         return redirect()->to('/unggah/sukses');

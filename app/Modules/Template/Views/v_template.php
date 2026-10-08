@@ -616,6 +616,25 @@
                         </a>
                     </li>
 
+<div class="xp-section-label">🛡️ Audit & Integritas</div>
+
+<!-- ===== AUDIT GERBANG PLAGIARISME (alat admin) ===== -->
+<li>
+    <a href="<?= base_url('plagiarism/audit') ?>" style="position:relative">
+        <i class="fa fa-history" style="color:#10b981"></i>
+        <span>Audit Gerbang</span>
+        <span style="margin-left:auto;padding:3px 10px;border-radius:999px;background:linear-gradient(90deg,#059669,#0891b2);color:#fff;font-size:.6rem;font-weight:800;letter-spacing:.06em;">GATE</span>
+    </a>
+</li>
+
+<!-- ===== DASBOR FORENSIK (tetap) ===== -->
+<li>
+    <a href="<?= base_url('bibliography/integrity-dashboard') ?>">
+        <i class="fa fa-area-chart" style="color:#f59e0b"></i>
+        <span>Dasbor Forensik</span>
+    </a>
+</li>
+
                     <div class="xp-section-label">⚙️ Operasi</div>
 
                     <!-- ===== DROPDOWN 1: WORKFLOW & FORENSIK ===== -->
@@ -984,6 +1003,7 @@
             {title:'Website Publik', icon:'fa-globe', url:'', meta:'Lihat situs depan'},
             {title:'Analitik Komando', icon:'fa-line-chart', url:'bibliography/analytics', meta:'AI · Statistik'},
             {title:'Scanner Kebersihan', icon:'fa-stethoscope', url:'bibliography/scanner', meta:'Diagnosis metadata'},
+            {title:'Audit Gerbang', icon:'fa-history', url:'plagiarism/audit', meta:'🛡️ Riwayat cek similaritas'},
             {title:'Pipeline Persetujuan', icon:'fa-tasks', url:'bibliography/pipeline', meta:'Workflow multi-level'},
             {title:'Integrity Scanner', icon:'fa-shield', url:'bibliography/integrity', meta:'Scan similarity + AI'},
             {title:'Dasbor Forensik', icon:'fa-area-chart', url:'bibliography/integrity-dashboard', meta:'Laporan integritas'},
@@ -1091,10 +1111,23 @@
             if (e.key === 'Escape' && cmdOverlay.classList.contains('open')) closeCmd();
         });
 
-        // ===== FAB =====
-        document.getElementById('xpFab').addEventListener('click', function(){
-            showXpToast('Aksi Cepat', 'Fitur ini siap dikustomisasi sesuai kebutuhan Anda.', 'success');
-        });
+// ===== FAB =====
+document.getElementById('xpFab').addEventListener('click', function(){
+    // Tampilkan modal aksi cepat
+    var html = '<div class="xp-cmd-overlay open" id="xpFabMenu" style="padding-top:20vh">'
+        + '<div class="xp-cmd-box" style="max-width:480px">'
+        + '<div class="xp-cmd-head"><i class="fa fa-bolt" style="color:#f59e0b"></i><b style="flex:1">Aksi Cepat</b><button onclick="this.closest(\'.xp-cmd-overlay\').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8">&times;</button></div>'
+        + '<div class="xp-cmd-results" style="max-height:300px">'
+        + '<a href="' + baseUrl + 'unggah" target="_blank" class="xp-cmd-item"><i class="fa fa-cloud-upload"></i><div><div>Unggah Dokumen</div><div style="font-size:.72rem;color:#94a3b8">Form submission publik</div></div></a>'
+        + '<a href="' + baseUrl + 'cek-similaritas" target="_blank" class="xp-cmd-item"><i class="fa fa-shield"></i><div><div>Cek Similaritas</div><div style="font-size:.72rem;color:#94a3b8">Scan plagiarisme mandiri</div></div></a>'
+        + '<a href="' + baseUrl + 'beranda/ai" target="_blank" class="xp-cmd-item"><i class="fa fa-robot"></i><div><div>Rangkui AI</div><div style="font-size:.72rem;color:#94a3b8">Asisten riset hybrid</div></div></a>'
+        + '<a href="' + baseUrl + 'bibliography/pipeline" class="xp-cmd-item"><i class="fa fa-tasks"></i><div><div>Pipeline Persetujuan</div><div style="font-size:.72rem;color:#94a3b8">Review dokumen pending</div></div></a>'
+        + '</div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    document.getElementById('xpFabMenu').addEventListener('click', function(e){
+        if (e.target === this) this.remove();
+    });
+});
 
         // ===== BELL (panel notifikasi real) =====
         var xpBell = document.getElementById('xpBell');

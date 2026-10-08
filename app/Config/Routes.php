@@ -79,6 +79,15 @@ $routes->post('submission/reject/(:num)', '\App\Modules\Submission\Controllers\A
 $routes->post('submission/requestRevisi/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::requestRevisi/$1');
 $routes->post('admin-dashboard/delete/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::delete/$1');
 
+// ===== 🔬 PLAGIARISM GATE (PUBLIK) =====
+$routes->get('cek-similaritas', '\App\Modules\Submission\Controllers\PlagiarismController::index');
+$routes->post('cek-similaritas/scan', '\App\Modules\Submission\Controllers\PlagiarismController::scan');
+$routes->post('cek-similaritas/build', '\App\Modules\Submission\Controllers\PlagiarismController::build');
+$routes->post('cek-similaritas/advice', '\App\Modules\Submission\Controllers\PlagiarismController::advice');
+
+// ===== 🛡️ AUDIT GERBANG (KHUSUS ADMIN) =====
+$routes->get('plagiarism/audit', '\App\Modules\Submission\Controllers\PlagiarismController::audit');
+
 // ===== 🎓 FITUR BARU: AKADEMIK TERPADU =====
 // Sertifikat Deposito Digital
 $routes->get('sertifikat/(:segment)', '\App\Modules\Bibliography\Controllers\CertificateController::verify/$1');
