@@ -44,7 +44,19 @@ class BackupController extends BaseController
         // turn on implicit flush
         ob_implicit_flush();
         // checking if the binary can be executed
-        $mysql_dump_path = shell_exec('where mysqldump');
+        $lookupCommand = PHP_OS_FAMILY === 'Windows'
+            ? 'where mysqldump 2>NUL'
+            : 'command -v mysqldump 2>/dev/null';
+        $mysql_dump_path = function_exists('shell_exec') ? shell_exec($lookupCommand) : null;
+        $mysql_dump_path = trim((string) $mysql_dump_path);
+        $mysql_dump_path = strtok($mysql_dump_path, "\\r\\n") ?: '';
+
+        if ($mysql_dump_path === '' || !function_exists('exec')) {
+            $log_message = 'Backup gagal: mysqldump tidak ditemukan atau fungsi exec/shell_exec dinonaktifkan oleh hosting.';
+            slim_alert('error', $log_message);
+            Services::writeLog(getTypeUser($this->session->user_type), $this->session->user_id, 'Backup', $log_message);
+            return redirect()->to('sistem/backups');
+        }
 
         $time2append = date("Ymd_His");
 
@@ -56,18 +68,16 @@ class BackupController extends BaseController
         // Cek apakah folder 'backup' ada
         if (!is_dir($backupPath)) {
             // Jika tidak ada, buat folder dengan izin akses bisa ditulis
-            if (mkdir($backupPath, 0777, true)) {
+            if (mkdir($backupPath, 0750, true)) {
                 $exist_dir = true;
                 $writable_dir = true;
             }
         } else {
             // Jika ada, cek apakah bisa ditulis
             if (!is_writable($backupPath)) {
-                // Jika tidak bisa ditulis, ubah izin aksesnya
-                if (chmod($backupPath, 0777)) {
-                    $exist_dir = true;
-                    $writable_dir = true;
-                }
+                // Jangan mengubah permission produksi menjadi 0777.
+                $exist_dir = true;
+                $writable_dir = false;
             } else {
                 $writable_dir = true;
                 $exist_dir = true;
@@ -80,16 +90,18 @@ class BackupController extends BaseController
             $db_user = $this->db->username;
             $db_password = $this->db->password;
 
-            $mysql_dump_path = trim($mysql_dump_path);
-            $command = "{$mysql_dump_path} -B {$db_name} ";
-            $command .= "--no-create-db --quick --user={$db_user} ";
-            $command .= "--password={$db_password} ";
-            $command .= "--host={$db_host} ";
-            $command .= " > {$fullPath} ";
+            // Quote semua argumen shell agar spasi/karakter khusus pada konfigurasi tidak merusak perintah.
+            $command = escapeshellarg($mysql_dump_path) . ' --single-transaction --quick'
+                . ' --user=' . escapeshellarg((string) $db_user)
+                . ' ' . escapeshellarg('--password=' . (string) $db_password)
+                . ' --host=' . escapeshellarg((string) $db_host)
+                . ' --port=' . (int) $this->db->port
+                . ' --databases ' . escapeshellarg((string) $db_name)
+                . ' > ' . escapeshellarg($fullPath) . ' 2>&1';
 
             exec($command, $output, $status);
 
-            if ($status == COMMAND_SUCCESS || $status == 1) {
+            if ($status === COMMAND_SUCCESS && is_file($fullPath) && filesize($fullPath) > 0) {
 
                 $user_id = $this->session->user_id;
                 $backup_time = date("Y-m-d H:i:s");
@@ -97,7 +109,7 @@ class BackupController extends BaseController
                 $data = [
                     'user_id' => $user_id,
                     'backup_time' => $backup_time,
-                    'backup_file' => $this->db->escapeString($fullPath),
+                    'backup_file' => $fullPath,
                 ];
 
                 $output = "Backup SUCCESSFUL, backup files saved to {$backupPath} !";
@@ -109,19 +121,17 @@ class BackupController extends BaseController
                     @chdir($backupPath);
                     // compress the backup using tar gz
 
-                    $command = "";
-                    $command .= "tar cvzf backup_{$time2append}.sql.tar.gz";
-                    $command .= " backup_{$time2append}.sql";
+                    $archivePath = $backupPath . DS . "backup_{$time2append}.sql.tar.gz";
+                    $command = 'tar -czf ' . escapeshellarg($archivePath)
+                        . ' -C ' . escapeshellarg($backupPath)
+                        . ' ' . escapeshellarg(basename($fullPath));
 
                     exec($command, $outputs, $status);
-                    if ($status == COMMAND_SUCCESS) {
-                        // delete the original file
-                        @unlink($data['backup_file']);
-                        $output .= "File is compressed using tar gz archive format";
-
-                        $fullPath = $backupPath . DS . "backup_{$time2append}.sql.tar.gz";
-
-                        $data['backup_file'] = $this->db->escapeString($fullPath);
+                    if ($status === COMMAND_SUCCESS && is_file($archivePath) && filesize($archivePath) > 0) {
+                        @unlink($fullPath);
+                        $output .= "File dikompresi dalam format tar.gz";
+                        $fullPath = $archivePath;
+                        $data['backup_file'] = $archivePath;
                     }
                     // return to previous PHP working dir
                     @chdir($curr_dir);
@@ -143,8 +153,11 @@ class BackupController extends BaseController
                     slim_alert('success', "Backup database success, {$this->db->escapeString($output)}");
                     $log_message = "{$this->session->name} backup success}";
                 }
-            } else if ($status == COMMAND_FAILED) {
-                $log_message = 'Backup FAILED! Wrong user or password to connect to database server!';
+            } else {
+                if (is_file($fullPath)) {
+                    @unlink($fullPath);
+                }
+                $log_message = 'Backup gagal: mysqldump mengembalikan status error atau berkas backup kosong. Periksa kredensial database dan log server.';
                 slim_alert('error', $log_message);
             }
         } else {
