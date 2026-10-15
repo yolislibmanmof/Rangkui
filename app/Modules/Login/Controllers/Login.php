@@ -96,10 +96,24 @@ class Login extends BaseController
                 // Ignore upgrade error
             }
         }
-        // Fallback: coba plain text (sangat tidak recommended)
-        elseif ($password === $user['passwd']) {
+        // Legacy fallback: autentikasi akun lama satu kali, lalu migrasikan segera ke bcrypt.
+        // Password teks biasa tidak lagi disimpan setelah login berhasil.
+        elseif (is_string($user['passwd']) && $password === $user['passwd']) {
             $isValid = true;
-            if ($debug) echo "✅ Password valid (plain text)<br>";
+            $upgradedHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+            if ($upgradedHash !== false) {
+                try {
+                    $upgraded = $userModel->update($user['user_id'], ['passwd' => $upgradedHash]);
+                    if ($upgraded !== false) {
+                        $user['passwd'] = $upgradedHash;
+                        log_message('notice', 'Legacy password upgraded to bcrypt for user ID ' . (int) $user['user_id']);
+                    } else {
+                        log_message('error', 'Legacy password migration failed for user ID ' . (int) $user['user_id']);
+                    }
+                } catch (\\Throwable $e) {
+                    log_message('error', 'Legacy password migration exception for user ID ' . (int) $user['user_id'] . ': ' . $e->getMessage());
+                }
+            }
         }
 
         if (!$isValid) {
@@ -123,6 +137,8 @@ class Login extends BaseController
             'username'  => $user['username'],
         ];
         
+        // Regenerasi ID session setelah autentikasi untuk mencegah session fixation.
+        session()->regenerate(true);
         session()->set($sessionData);
         
         if ($debug) {
