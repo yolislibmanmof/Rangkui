@@ -109,9 +109,13 @@ class BibliographyController extends BaseController
                 slim_alert('error', 'Ukuran setiap PDF maksimal 50 MB.');
                 return redirect()->back()->withInput();
             }
+            $pdfMime = strtolower((string) $pdfFile->getMimeType());
             $pdfHead = @file_get_contents($pdfFile->getTempName(), false, null, 0, 1024);
-            if (strtolower((string) $pdfFile->getClientExtension()) !== 'pdf' || !is_string($pdfHead) || strpos($pdfHead, '%PDF-') === false) {
-                slim_alert('error', 'Lampiran harus berupa file PDF yang valid.');
+            $hasPdfSignature = is_string($pdfHead) && strpos($pdfHead, '%PDF-') !== false;
+            $hasPdfMime = in_array($pdfMime, ['application/pdf', 'application/x-pdf'], true);
+
+            if (strtolower((string) $pdfFile->getClientExtension()) !== 'pdf' || !$hasPdfMime || !$hasPdfSignature) {
+                slim_alert('error', 'Lampiran harus berupa file PDF yang valid (MIME dan tanda tangan file tidak cocok).');
                 return redirect()->back()->withInput();
             }
         }
