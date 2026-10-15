@@ -18,3 +18,7 @@ writable/uploads/
 Thumbs.db
 .vscode/
 .idea/
+# Database dumps and private backup artifacts must never be committed.
+/public/uploads/files/backup/*.sql
+/public/uploads/files/backup/*.sql.tar.gz
+/writable/backup/*.sql
