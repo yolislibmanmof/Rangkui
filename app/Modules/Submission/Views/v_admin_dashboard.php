@@ -279,11 +279,10 @@
                     <td>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                             <?php if ($sub->status == 'menunggu' && $sub->current_stage == 'admin'): ?>
-                                <a href="<?= base_url('submission/approve/' . $sub->submission_id) ?>" 
-                                   class="xuActionBtn approve"
-                                   onclick="return confirm('Yakin ingin menyetujui submission ini?')">
-                                    <i class="fa fa-check"></i> Setujui
-                                </a>
+                                <form method="post" action="<?= base_url('submission/approve/' . $sub->submission_id) ?>" style="display:inline" onsubmit="return confirm('Yakin ingin menyetujui submission ini?')">
+                                    <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
+                                    <button type="submit" class="xuActionBtn approve"><i class="fa fa-check"></i> Setujui</button>
+                                </form>
                                 <button class="xuActionBtn revisi" onclick="showRevisiModal(<?= $sub->submission_id ?>)">
                                     <i class="fa fa-edit"></i> Revisi
                                 </button>
@@ -343,6 +342,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="formRevisi" method="post">
+                <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Catatan Revisi</label>
@@ -367,6 +367,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="formReject" method="post">
+                <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Alasan Penolakan</label>
