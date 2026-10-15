@@ -403,6 +403,28 @@ html.xu-dark .ult-modal-footer .btn-secondary:hover{background:rgba(255,255,255,
 .ult-modal-footer .btn-primary:hover::before{left:120%}
 
 /* ===== Responsive ===== */
+.xuAvatarUpload{
+    max-width:280px;margin:16px auto 4px;padding:14px;text-align:left;
+    border:1px solid rgba(5,150,105,.18);border-radius:13px;
+    background:rgba(5,150,105,.035);
+}
+.xuAvatarUpload label{
+    display:block;margin-bottom:7px;color:var(--xp-ink);font-size:.72rem;
+    font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+}
+.xuAvatarUpload input[type=file]{
+    display:block;width:100%;padding:7px;margin-bottom:8px;font-size:.76rem;
+    border:1px solid #dbe5e3;border-radius:9px;background:#fff;
+}
+.xuAvatarUpload small{display:block;color:var(--xp-muted);margin:0 0 10px;font-size:.72rem}
+.xuAvatarUpload .btn{
+    width:100%;border:0;border-radius:9px;padding:9px 12px;color:#fff;
+    font-size:.82rem;font-weight:800;background:linear-gradient(100deg,var(--xp-emerald),var(--xp-teal));
+}
+html.xu-dark .xuAvatarUpload{background:rgba(5,150,105,.07);border-color:rgba(5,150,105,.2)}
+html.xu-dark .xuAvatarUpload label{color:#e2e8f0}
+html.xu-dark .xuAvatarUpload input[type=file]{background:#0f2924;color:#e2e8f0;border-color:rgba(5,150,105,.25)}
+
 @media(max-width:768px){
     .profile_left{padding:22px 18px}
     .avatar-view{width:110px;height:110px}
@@ -412,6 +434,15 @@ html.xu-dark .ult-modal-footer .btn-secondary:hover{background:rgba(255,255,255,
     .ult-modal-footer{padding:16px 18px}
 }
 </style>
+
+<?php
+// Gunakan gambar fallback bila kolom kosong atau file foto lama tidak tersedia.
+$avatarName = basename((string) ($data->user_image ?? ''));
+$avatarFile = FCPATH . 'uploads' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'persons' . DIRECTORY_SEPARATOR . $avatarName;
+$avatarUrl = ($avatarName !== '' && strtolower($avatarName) !== 'default.png' && is_file($avatarFile))
+    ? base_url('uploads/images/persons/' . rawurlencode($avatarName))
+    : base_url('assets/images/no_image.jpg');
+?>
 
 <div class="x_panel xuProfilePanel">
     <div class="xuProfileHead">
@@ -428,10 +459,17 @@ html.xu-dark .ult-modal-footer .btn-secondary:hover{background:rgba(255,255,255,
                         <!-- Avatar dengan ring berdenyut -->
                         <div class="profile_img">
                             <div id="crop-avatar" class="text-center">
-                                <img class="img-responsive avatar-view img-cover"
-                                     src="<?= base_url('uploads/images/persons/' . ($data->user_image ?: 'default.png')) ?>"
-                                     alt="Avatar" title="Change the avatar">
+                                <img id="profileAvatarPreview" class="img-responsive avatar-view img-cover"
+                                     src="<?= esc($avatarUrl, 'attr') ?>"
+                                     alt="Foto Profil" title="Foto Profil">
                             </div>
+                            <form action="<?= base_url('profile/upload-avatar') ?>" method="post" enctype="multipart/form-data" class="xuAvatarUpload">
+                                <?= csrf_field() ?>
+                                <label for="profile_avatar"><i class="fa fa-camera"></i> Ganti Foto Profil</label>
+                                <input type="file" id="profile_avatar" name="avatar" accept="image/jpeg,image/png,image/webp" required>
+                                <small>Format JPG, PNG, atau WEBP. Ukuran maksimal 2 MB.</small>
+                                <button type="submit" class="btn"><i class="fa fa-upload"></i> Unggah Foto</button>
+                            </form>
                         </div>
 
                         <h3><?= esc($data->realname) ?></h3>
@@ -644,12 +682,12 @@ html.xu-dark .ult-modal-footer .btn-secondary:hover{background:rgba(255,255,255,
                     <div class="row">
                         <div class="col-md-6 form-group">
                             <label for="passwd1">Password Baru</label>
-                            <input type="password" id="passwd1" name="passwd1" class="form-control" onkeyup="confirm_pass()">
+                            <input type="password" id="passwd1" name="passwd1" class="form-control" autocomplete="new-password" onkeyup="confirm_pass()">
                             <small id="validation_pass" class="text-danger"></small>
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="passwd2">Konfirmasi Password</label>
-                            <input type="password" id="passwd2" name="passwd2" class="form-control" onkeyup="confirm_pass()">
+                            <input type="password" id="passwd2" name="passwd2" class="form-control" autocomplete="new-password" onkeyup="confirm_pass()">
                             <small id="validation_confirm_pass" class="text-danger"></small>
                         </div>
                     </div>
@@ -668,72 +706,4 @@ html.xu-dark .ult-modal-footer .btn-secondary:hover{background:rgba(255,255,255,
     </div>
 </div>
 
-<!-- ============ JAVASCRIPT ============ -->
-<script>
-    function showModal(data) {
-        // Handle data social_media yang mungkin ter-serialize
-        let sm = data.social_media;
-        if (typeof sm === 'string') {
-            try { sm = JSON.parse(sm); } catch (e) { sm = {}; }
-        }
-        if (!sm || typeof sm !== 'object') sm = {};
-
-        // Isi form dengan data pengguna
-        $('#user_id').val(data.user_id || '');
-        $('#username').val(data.username || '');
-        $('#realname').val(data.realname || '');
-        $('#email').val(data.email || '');
-        $('#user_type').val(data.user_type || '1');
-
-        // Isi media sosial
-        $('#inputFacebook').val(sm.fb || '');
-        $('#inputTwitter').val(sm.tw || '');
-        $('#inputLinkedIn').val(sm.li || '');
-        $('#inputReddit').val(sm.rd || '');
-        $('#inputPinterest').val(sm.pn || '');
-        $('#inputGooglePlus').val(sm.gp || '');
-        $('#inputYouTube').val(sm.yt || '');
-        $('#inputBlog').val(sm.bl || '');
-        $('#inputYahooMessenger').val(sm.ym || '');
-
-        // Kosongkan password fields
-        $('#passwd1').val('');
-        $('#passwd2').val('');
-        $('#validation_pass').text('');
-        $('#validation_confirm_pass').text('');
-
-        $('#modal_action').modal('show');
-    }
-
-    function confirm_pass() {
-        const p1 = $('#passwd1').val();
-        const p2 = $('#passwd2').val();
-        const v1 = $('#validation_pass');
-        const v2 = $('#validation_confirm_pass');
-
-        if (p1 && p1.length < 6) {
-            v1.text('Password minimal 6 karakter');
-        } else {
-            v1.text('');
-        }
-
-        if (p2 && p1 !== p2) {
-            v2.text('Password tidak cocok');
-        } else {
-            v2.text('');
-        }
-    }
-
-    // Validasi sebelum submit
-    $('#profileForm').on('submit', function(e) {
-        const p1 = $('#passwd1').val();
-        const p2 = $('#passwd2').val();
-
-        if ((p1 || p2) && p1 !== p2) {
-            e.preventDefault();
-            $('#validation_confirm_pass').text('Password tidak cocok. Silakan periksa kembali.');
-            $('#passwd2').focus();
-            return false;
-        }
-    });
-</script>
+<!-- JavaScript halaman profil dimuat melalui assets/custom/js/modules/profile/profile.js setelah jQuery. -->
