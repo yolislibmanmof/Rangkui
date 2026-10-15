@@ -68,7 +68,7 @@ class BibliographyModel extends BaseModel
                 foreach ($relations as [$table, $idColumn]) {
                     $deleted = $this->db->table($table)->where('biblio_id', $biblio_id)->delete();
                     if ($deleted === false) {
-                        throw new \\RuntimeException('Gagal menghapus relasi lama dari tabel ' . $table);
+                        throw new \RuntimeException('Gagal menghapus relasi lama dari tabel ' . $table);
                     }
                 }
             }
@@ -92,18 +92,18 @@ class BibliographyModel extends BaseModel
 
                     $inserted = $this->db->table($table)->insert($row);
                     if ($inserted === false) {
-                        throw new \\RuntimeException('Gagal menyimpan relasi ke tabel ' . $table);
+                        throw new \RuntimeException('Gagal menyimpan relasi ke tabel ' . $table);
                     }
                 }
             }
 
             if ($this->db->transStatus() === false) {
-                throw new \\RuntimeException('Transaksi penyimpanan relasi bibliografi gagal.');
+                throw new \RuntimeException('Transaksi penyimpanan relasi bibliografi gagal.');
             }
 
             $this->db->transCommit();
             return true;
-        } catch (\\Throwable $e) {
+        } catch (\Throwable $e) {
             $this->db->transRollback();
             log_message('error', 'insertBilioSub gagal untuk biblio_id ' . $biblio_id . ': ' . $e->getMessage());
             return false;
