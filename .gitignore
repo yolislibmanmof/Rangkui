@@ -22,5 +22,6 @@ Thumbs.db
 /public/uploads/files/backup/*.sql
 /public/uploads/files/backup/*.sql.tar.gz
 /writable/backup/*.sql
+/writable/backup/*.sql.tar.gz
 /install.sql
 /admin.backup/brantas.sql
