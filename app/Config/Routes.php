@@ -38,7 +38,7 @@ $routes->get('logout', [Login::class, 'logout']);
  */
 $routes->get('oai', 'OaiPmhController::index');
 $routes->get('persetujuan/(:segment)', '\App\Modules\Bibliography\Controllers\ApprovalController::approvePublic/$1');
-$routes->post('persetujuan/act', '\App\Modules\Bibliography\Controllers\ApprovalController::actPublic');
+$routes->post('persetujuan/act', '\App\Modules\Bibliography\Controllers\ApprovalController::actPublic', ['filter' => 'csrf']);
 $routes->get('information', "\App\Modules\info\Controllers\InfoController::index");
 
 $routes->setTranslateURIDashes(true);
