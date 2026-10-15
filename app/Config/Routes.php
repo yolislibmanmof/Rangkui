@@ -68,7 +68,7 @@ foreach ($dirs as $module) {
 
 // Rute eksplisit foto profil sebagai fallback untuk deployment yang belum
 // memuat ulang rute modul. Endpoint unggah tetap menerima POST saja.
-$routes->post('profile/upload-avatar', '\\App\\Modules\\Profile\\Controllers\\ProfileController::uploadAvatar');
+$routes->post('profile/upload-avatar', '\\App\\Modules\\Profile\\Controllers\\ProfileController::uploadAvatar', ['filter' => 'csrf']);
 // Jika endpoint dibuka langsung lewat address bar (GET), kembali ke halaman profil.
 $routes->get('profile/upload-avatar', '\\App\\Modules\\Profile\\Controllers\\ProfileController::index');
 
