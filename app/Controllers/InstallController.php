@@ -482,69 +482,125 @@ class InstallController extends BaseController
 
     function _updateEnv()
     {
-        $config = $this->session->dbConfig;
-        extract($config);
-
-        if (empty($host) || empty($database) || empty($username) || empty($port)) {
-            return "Database configuration error";
+        $config = $this->session->get('dbConfig');
+        if (!is_array($config)) {
+            throw new \RuntimeException('Konfigurasi database instalasi tidak tersedia.');
         }
 
-        // Path ke file .env dan .env.example
+        $host = trim((string) ($config['host'] ?? ''));
+        $database = trim((string) ($config['database'] ?? ''));
+        $username = (string) ($config['username'] ?? '');
+        $password = (string) ($config['password'] ?? '');
+        $port = (int) ($config['port'] ?? 0);
+
+        if ($host === '' || $database === '' || $username === '' || $port < 1 || $port > 65535) {
+            throw new \RuntimeException('Konfigurasi database tidak lengkap atau port tidak valid.');
+        }
+
         $envFilePath = ROOTPATH . '.env';
-        $envLocalFilePath = ROOTPATH . '.env.example';
+        $envExamplePath = ROOTPATH . '.env.example';
+        $targetPath = is_file($envFilePath) ? $envFilePath : $envExamplePath;
 
-        // Merename file .env.example menjadi .env
-        if (file_exists($envLocalFilePath)) {
-
-            $envContent = file_get_contents($envLocalFilePath);
-
-            // Mengganti nilai dalam file .env
-            $patternHostname  = "/^database\.default\.hostname\s*=\s*([^\r\n]*)/m";
-            $patternDatabase  = "/^database\.default\.database\s*=\s*([^\r\n]*)/m";
-            $patternUsername  = "/^database\.default\.username\s*=\s*([^\r\n]*)/m";
-            $patternPassword  = "/^database\.default\.password\s*=\s*([^\r\n]*)/m";
-            $patternPort      = "/^database\.default\.port\s*=\s*([^\r\n]*)/m";
-
-            // Jika hostname ada dalam file, lakukan penggantian
-            if (preg_match($patternHostname, $envContent)) {
-                // Update nilai hostname yang ada
-                $envContent = preg_replace($patternHostname, 'database.default.hostname=' . $host, $envContent);
-            }
-
-            // Jika database ada dalam file, lakukan penggantian
-            if (preg_match($patternDatabase, $envContent)) {
-                // Update nilai database yang ada
-                $envContent = preg_replace($patternDatabase, 'database.default.database=' . $database, $envContent);
-            }
-
-            if (preg_match($patternUsername, $envContent)) {
-                $envContent = preg_replace($patternUsername, 'database.default.username=' . $username, $envContent);
-            } else {
-                // Jika username tidak ditemukan, tambahkan setelah database.default.database
-                if (preg_match($patternDatabase, $envContent, $matches)) {
-                    // Temukan posisi database.default.database
-                    $pos = strpos($envContent, $matches[0]);
-                    // Tambahkan username setelahnya
-                    $insertPos = $pos + strlen($matches[0]);
-                    $envContent = substr_replace($envContent, "\ndatabase.default.username=" . $username, $insertPos, 0);
-                }
-            }
-
-            // Jika password ada dalam file, lakukan penggantian
-            if (preg_match($patternPassword, $envContent)) {
-                // Update nilai password yang ada
-                $envContent = preg_replace($patternPassword, 'database.default.password=' . $password, $envContent);
-            }
-
-            // Jika port ada dalam file, lakukan penggantian
-            if (preg_match($patternPort, $envContent)) {
-                // Update nilai port yang ada
-                $envContent = preg_replace($patternPort, 'database.default.port=' . $port, $envContent);
-            }
-            // Menyimpan kembali isi yang sudah diperbarui ke file .env
-            file_put_contents($envLocalFilePath, $envContent);
-
-            rename($envLocalFilePath, $envFilePath);
+        if (!is_file($targetPath) || !is_readable($targetPath)) {
+            throw new \RuntimeException('File .env atau .env.example tidak ditemukan atau tidak dapat dibaca.');
         }
+
+        $envContent = file_get_contents($targetPath);
+        if (!is_string($envContent) || $envContent === '') {
+            throw new \RuntimeException('Isi file konfigurasi environment kosong atau gagal dibaca.');
+        }
+
+        // Bentuk URL dari host yang benar-benar digunakan untuk membuka installer,
+        // bukan nilai contoh lokal "rangkui.test" di template.
+        $httpHost = trim((string) $this->request->getServer('HTTP_HOST'));
+        $hostParts = $httpHost !== '' ? parse_url('http://' . $httpHost) : false;
+        $hostName = is_array($hostParts) ? trim(strtolower((string) ($hostParts['host'] ?? '')), '[]') : '';
+        $hostPort = is_array($hostParts) && isset($hostParts['port']) ? (int) $hostParts['port'] : null;
+
+        $isIPv4 = filter_var($hostName, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+        $isIPv6 = filter_var($hostName, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+        $isDomain = preg_match(
+            '/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/D',
+            $hostName
+        ) === 1;
+
+        if ($hostName === '' || (!$isIPv4 && !$isIPv6 && !$isDomain) || ($hostPort !== null && ($hostPort < 1 || $hostPort > 65535))) {
+            throw new \RuntimeException('Nama host saat instalasi tidak valid. Buka installer menggunakan alamat situs yang benar.');
+        }
+
+        $httpsValue = strtolower(trim((string) $this->request->getServer('HTTPS')));
+        $isHttps = $httpsValue !== '' && $httpsValue !== 'off' && $httpsValue !== '0';
+        $scheme = $isHttps ? 'https' : 'http';
+        $urlHost = $isIPv6 ? '[' . $hostName . ']' : $hostName;
+        $portSuffix = $hostPort !== null ? ':' . $hostPort : '';
+
+        $scriptName = str_replace('\\', '/', (string) $this->request->getServer('SCRIPT_NAME'));
+        $basePath = dirname($scriptName);
+        if ($basePath === '.' || $basePath === DIRECTORY_SEPARATOR) {
+            $basePath = '/';
+        } else {
+            $basePath = '/' . trim($basePath, '/') . '/';
+        }
+
+        $baseURL = $scheme . '://' . $urlHost . $portSuffix . $basePath;
+        $isLocalHost = in_array($hostName, ['localhost', '127.0.0.1', '::1'], true)
+            || preg_match('/\.(?:test|local|localhost)$/i', $hostName) === 1;
+        $environment = $isLocalHost ? 'development' : 'production';
+
+        // Kutip nilai dotenv agar password dengan $, #, spasi, atau tanda kutip
+        // tidak merusak file konfigurasi.
+        $quoteEnv = static function (string $value): string {
+            $value = str_replace(["\\", "'", "\r", "\n"], ["\\\\", "\\'", '', ''], $value);
+            return "'" . $value . "'";
+        };
+
+        $setEnv = static function (string $text, string $key, string $value): string {
+            $pattern = '/^[ \t]*' . preg_quote($key, '/') . '[ \t]*=.*$/m';
+            $line = $key . ' = ' . $value;
+
+            if (preg_match($pattern, $text) === 1) {
+                $updated = preg_replace_callback($pattern, static fn () => $line, $text, 1);
+                return is_string($updated) ? $updated : $text;
+            }
+
+            return rtrim($text) . "\n" . $line . "\n";
+        };
+
+        $envValues = [
+            'CI_ENVIRONMENT' => $environment,
+            'app.baseURL' => $quoteEnv($baseURL),
+            'app.forceGlobalSecureRequests' => $isHttps ? 'true' : 'false',
+            'database.default.hostname' => $quoteEnv($host),
+            'database.default.database' => $quoteEnv($database),
+            'database.default.username' => $quoteEnv($username),
+            'database.default.password' => $quoteEnv($password),
+            'database.default.port' => (string) $port,
+        ];
+
+        foreach ($envValues as $key => $value) {
+            $envContent = $setEnv($envContent, $key, $value);
+        }
+
+        // Jangan meninggalkan encryption.key kosong pada instalasi baru.
+        $existingKey = '';
+        if (preg_match('/^[ \t]*encryption\.key[ \t]*=(.*)$/m', $envContent, $matches) === 1) {
+            $existingKey = trim((string) ($matches[1] ?? ''), " \t\r\n'\"");
+        }
+        if ($existingKey === '') {
+            $envContent = $setEnv($envContent, 'encryption.key', $quoteEnv(bin2hex(random_bytes(32))));
+        }
+
+        if (file_put_contents($targetPath, $envContent, LOCK_EX) === false) {
+            throw new \RuntimeException('Konfigurasi environment gagal ditulis. Periksa izin folder aplikasi.');
+        }
+
+        if ($targetPath === $envExamplePath) {
+            if (is_file($envFilePath) || !rename($envExamplePath, $envFilePath)) {
+                throw new \RuntimeException('Gagal mengaktifkan file .env setelah instalasi.');
+            }
+        }
+
+        return true;
     }
+
 }
