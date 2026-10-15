@@ -60,6 +60,6 @@ $routes->group('sistem', ['namespace' => 'App\Modules\System\Controllers'], func
 
     // Backup
     $routes->get('backups', 'BackupController::index');
-    $routes->get('backups/add', 'BackupController::add');
+    $routes->post('backups/add', 'BackupController::add', ['filter' => 'csrf']);
     $routes->get('backups/download/(:num)', 'BackupController::download/$1');
 });
