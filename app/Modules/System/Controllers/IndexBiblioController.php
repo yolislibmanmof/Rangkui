@@ -88,6 +88,10 @@ class IndexBiblioController extends BaseController
 
     function delete()
     {
+        if (!$this->request->is('post')) {
+            return redirect()->to('sistem/indeks-biblio')->with('error', 'Metode tidak diizinkan.');
+        }
+
         $index_type = env('INDEX_TYPE', 'mysql');
 
         $log_message = "Delete index biblio";
@@ -207,6 +211,10 @@ class IndexBiblioController extends BaseController
 
     function reindex()
     {
+        if (!$this->request->is('post')) {
+            return redirect()->to('sistem/indeks-biblio')->with('error', 'Metode tidak diizinkan.');
+        }
+
         set_time_limit(0);
 
         $index_type = $_ENV['INDEX_TYPE'] ?? "mysql";
