@@ -297,7 +297,7 @@ html.xu-dark .xuBtnCancel{background:rgba(5,150,105,.12);color:var(--gs-mint);bo
         <h2><i class="fa fa-cog"></i> Modify Global Application Preferences</h2>
     </div>
 
-    <form name="mainForm" id="mainForm" method="post" action="/sistem/pengaturan-sistem/create">
+    <form name="mainForm" id="mainForm" method="post" action="<?= site_url('sistem/pengaturan-sistem/update') ?>">
         <?= csrf_field(); ?>
         <div class="xuSysBody">
             <div class="xuSysRow">
@@ -464,8 +464,6 @@ html.xu-dark .xuBtnCancel{background:rgba(5,150,105,.12);color:var(--gs-mint);bo
 </div>
 
 <?php
-global $contentPath;
-
 echo view($contentPath . 'Sistem\modal\v_recaptcha_page');
 echo view($contentPath . 'Sistem\modal\v_manual_page');
 ?>
