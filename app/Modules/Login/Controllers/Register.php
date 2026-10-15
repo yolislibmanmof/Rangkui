@@ -99,7 +99,7 @@ class Register extends BaseController
 
         try {
             $file->move($path, $fotoName);
-        } catch (\\Throwable $e) {
+        } catch (\Throwable $e) {
             log_message('error', 'Gagal menyimpan foto pendaftaran anggota: ' . $e->getMessage());
             return redirect()->to('daftar')
                 ->with('errors', ['member_image' => 'Foto gagal disimpan. Silakan coba lagi.'])
