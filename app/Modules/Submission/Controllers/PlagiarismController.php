@@ -63,8 +63,11 @@ class PlagiarismController extends BaseController
         if (!$file || !$file->isValid()) {
             return $this->response->setJSON(['ok' => false, 'error' => 'File tidak valid']);
         }
-        if ($file->getClientMimeType() !== 'application/pdf') {
-            return $this->response->setJSON(['ok' => false, 'error' => 'Hanya file PDF yang diterima']);
+        // Gunakan MIME dari pemeriksaan server, bukan hanya Content-Type kiriman browser.
+        $serverMime = strtolower((string) $file->getMimeType());
+        $signature = @file_get_contents($file->getTempName(), false, null, 0, 5);
+        if ($serverMime !== 'application/pdf' || $signature !== '%PDF-') {
+            return $this->response->setJSON(['ok' => false, 'error' => 'File harus berupa PDF yang valid']);
         }
         if ($file->getSize() > 25 * 1024 * 1024) {
             return $this->response->setJSON(['ok' => false, 'error' => 'Ukuran maksimal 25MB']);
