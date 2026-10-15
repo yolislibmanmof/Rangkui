@@ -27,6 +27,10 @@ class LogController extends BaseController
 
     function delete()
     {
+        if (!$this->request->is('post')) {
+            return redirect()->to('sistem/logs')->with('error', 'Metode tidak diizinkan.');
+        }
+
         $logs = new LogModel();
 
         $this->db->transBegin();
@@ -40,6 +44,8 @@ class LogController extends BaseController
             $this->db->transCommit();
             slim_alert('success', "Success remove system log");
         }
+
+        return redirect()->to('sistem/logs');
     }
 
     function save()
