@@ -1093,7 +1093,7 @@ html.xu-dark #xuTopikChips{background:rgba(5,150,105,.1);border-color:rgba(5,150
                                         </select>
                                     </div>
                                     <div class="col-md-2">
-                                        <input type="file" name="attc_file[]" placeholder="File" class="form-control" onchange="return validExt(this,2097152,['pdf'])" accept="application/pdf">
+                                        <input type="file" name="attc_file[]" placeholder="File" class="form-control" onchange="return validExt(this,52428800,['pdf'])" accept="application/pdf">
                                         <small class="form-text text-danger">Max PDF size 50 MB</small>
                                     </div>
                                     <div class="col-sm-1">
