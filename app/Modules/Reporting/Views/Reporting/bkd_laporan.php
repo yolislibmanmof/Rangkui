@@ -45,6 +45,7 @@
         <div class="bkBody">
             <div class="bkActions">
                 <form method="post" action="<?= base_url('bkd/generate') ?>" style="margin:0;">
+                    <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
                     <input type="hidden" name="semester" value="<?= esc($semester) ?>">
                     <button type="submit" class="bkBtn bkBtnPri">
                         <i class="fa fa-refresh"></i> Generate Ulang Laporan
