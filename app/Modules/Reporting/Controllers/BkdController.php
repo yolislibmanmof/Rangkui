@@ -12,7 +12,10 @@ class BkdController extends BaseController
 
     public function laporan()
     {
-        $semester = $this->request->getGet('semester') ?? $this->getCurrentSemester();
+        $semester = $this->normalizeSemester($this->request->getGet('semester') ?? $this->getCurrentSemester());
+        if ($semester === null) {
+            return redirect()->to('/bkd/laporan')->with('error', 'Semester tidak valid.');
+        }
         $db = \Config\Database::connect();
         
         $sql = "SELECT 
@@ -27,25 +30,25 @@ class BkdController extends BaseController
                 LEFT JOIN biblio_supervisor bs ON s.supervisor_id = bs.supervisor_id
                     AND bs.biblio_id IN (
                         SELECT biblio_id FROM biblio 
-                        WHERE publish_year BETWEEN ? AND ?
+                        WHERE input_date >= ? AND input_date < ?
                     )
                 LEFT JOIN biblio_examiner be ON s.supervisor_id = be.examiner_id
                     AND be.biblio_id IN (
                         SELECT biblio_id FROM biblio 
-                        WHERE publish_year BETWEEN ? AND ?
+                        WHERE input_date >= ? AND input_date < ?
                     )
                 GROUP BY s.supervisor_id, s.supervisor_name
                 HAVING total_pembimbing > 0 OR total_penguji > 0
                 ORDER BY total_sks DESC";
 
-        $yearRange = $this->getYearRangeFromSemester($semester);
+        $dateRange = $this->getDateRangeFromSemester($semester);
         $sks_bim = $this->getSetting('bkd_sks_pembimbing', 2.00);
         $sks_uji = $this->getSetting('bkd_sks_penguji', 1.00);
         
         $result = $db->query($sql, [
             $sks_bim, $sks_uji, $sks_bim, $sks_uji,
-            $yearRange[0], $yearRange[1],
-            $yearRange[0], $yearRange[1]
+            $dateRange[0], $dateRange[1],
+            $dateRange[0], $dateRange[1]
         ])->getResult();
 
         $data = [
@@ -61,14 +64,17 @@ class BkdController extends BaseController
 
     public function generate()
     {
-        $semester = $this->request->getPost('semester');
+        $semester = $this->normalizeSemester($this->request->getPost('semester'));
+        if ($semester === null) {
+            return redirect()->to('/bkd/laporan')->with('error', 'Semester tidak valid.');
+        }
         $db = \Config\Database::connect();
         
         // Hapus data lama semester ini
         $db->table('dosen_bkd_rekap')->where('semester', $semester)->delete();
 
         // Generate ulang (logic sama dengan laporan())
-        $yearRange = $this->getYearRangeFromSemester($semester);
+        $dateRange = $this->getDateRangeFromSemester($semester);
         $sks_bim = $this->getSetting('bkd_sks_pembimbing', 2.00);
         $sks_uji = $this->getSetting('bkd_sks_penguji', 1.00);
 
@@ -77,13 +83,13 @@ class BkdController extends BaseController
                     COUNT(DISTINCT be.biblio_id) as total_uji
                 FROM mst_supervisor s
                 LEFT JOIN biblio_supervisor bs ON s.supervisor_id = bs.supervisor_id
-                    AND bs.biblio_id IN (SELECT biblio_id FROM biblio WHERE publish_year BETWEEN ? AND ?)
+                    AND bs.biblio_id IN (SELECT biblio_id FROM biblio WHERE input_date >= ? AND input_date < ?)
                 LEFT JOIN biblio_examiner be ON s.supervisor_id = be.examiner_id
-                    AND be.biblio_id IN (SELECT biblio_id FROM biblio WHERE publish_year BETWEEN ? AND ?)
-                GROUP BY s.supervisor_id
+                    AND be.biblio_id IN (SELECT biblio_id FROM biblio WHERE input_date >= ? AND input_date < ?)
+                GROUP BY s.supervisor_id, s.supervisor_name
                 HAVING total_bim > 0 OR total_uji > 0";
 
-        $result = $db->query($sql, [$yearRange[0], $yearRange[1], $yearRange[0], $yearRange[1]])->getResult();
+        $result = $db->query($sql, [$dateRange[0], $dateRange[1], $dateRange[0], $dateRange[1]])->getResult();
 
         foreach ($result as $r) {
             $db->table('dosen_bkd_rekap')->insert([
@@ -104,7 +110,10 @@ class BkdController extends BaseController
 
     public function export($format = 'xlsx')
     {
-        $semester = $this->request->getGet('semester') ?? $this->getCurrentSemester();
+        $semester = $this->normalizeSemester($this->request->getGet('semester') ?? $this->getCurrentSemester());
+        if ($semester === null) {
+            return redirect()->to('/bkd/laporan')->with('error', 'Semester tidak valid.');
+        }
         // Implementasi export ke Excel/PDF
         return redirect()->back()->with('info', 'Export akan segera tersedia');
     }
@@ -127,15 +136,40 @@ class BkdController extends BaseController
         return $year . ($month >= 7 ? '1' : '2');
     }
 
-    private function getYearRangeFromSemester($semester)
+    private function normalizeSemester($semester): ?string
     {
-        $year = substr($semester, 0, 4);
-        $type = substr($semester, 4, 1);
-        if ($type === '1') {
-            return [$year, $year]; // Jan-Des tahun yang sama
-        } else {
-            return [$year, $year]; // Bisa disesuaikan
+        if (!is_string($semester) && !is_int($semester)) {
+            return null;
         }
+
+        $semester = (string) $semester;
+        if (!preg_match('/^\\d{4}[12]$/D', $semester)) {
+            return null;
+        }
+
+        $year = (int) substr($semester, 0, 4);
+        if ($year < 2000 || $year > ((int) date('Y') + 2)) {
+            return null;
+        }
+
+        return $semester;
+    }
+
+    /**
+     * Semester ganjil: 1 Juli–1 Januari.
+     * Semester genap: 1 Januari–1 Juli.
+     * Batas akhir bersifat eksklusif agar timestamp tidak tumpang tindih.
+     */
+    private function getDateRangeFromSemester(string $semester): array
+    {
+        $year = (int) substr($semester, 0, 4);
+        $type = substr($semester, 4, 1);
+
+        if ($type === '1') {
+            return [sprintf('%04d-07-01', $year), sprintf('%04d-01-01', $year + 1)];
+        }
+
+        return [sprintf('%04d-01-01', $year), sprintf('%04d-07-01', $year)];
     }
 
     private function getSetting($key, $default = null)
