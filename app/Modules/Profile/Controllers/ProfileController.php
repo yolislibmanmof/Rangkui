@@ -296,6 +296,99 @@ class ProfileController extends BaseController
     }
 
     /**
+     * Unggah foto profil pengguna yang sedang login.
+     */
+    public function uploadAvatar()
+    {
+        if (!$this->request->is('post')) {
+            return redirect()->to('profile');
+        }
+
+        $uid = (int) ($this->session->user_id ?? 0);
+        if ($uid <= 0) {
+            slim_alert('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+            return redirect()->to('/login');
+        }
+
+        $file = $this->request->getFile('avatar');
+        if (!$file || $file->getError() === UPLOAD_ERR_NO_FILE) {
+            slim_alert('error', 'Pilih foto profil terlebih dahulu.');
+            return redirect()->to('profile');
+        }
+
+        if (!$file->isValid()) {
+            log_message('error', 'Upload foto profil gagal untuk user ' . $uid . ': ' . $file->getErrorString());
+            slim_alert('error', 'Foto tidak berhasil diunggah. Silakan pilih file lain.');
+            return redirect()->to('profile');
+        }
+
+        // Batas ukuran 2 MB.
+        if ($file->getSize() > 2 * 1024 * 1024) {
+            slim_alert('error', 'Ukuran foto maksimal 2 MB.');
+            return redirect()->to('profile');
+        }
+
+        // Periksa isi file sebagai gambar sungguhan, bukan hanya ekstensi.
+        $imageInfo = @getimagesize($file->getTempName());
+        $mime = is_array($imageInfo) ? strtolower((string) ($imageInfo['mime'] ?? '')) : '';
+        $allowedMimes = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+        ];
+
+        if (!isset($allowedMimes[$mime])) {
+            slim_alert('error', 'Format foto harus JPG, PNG, atau WEBP.');
+            return redirect()->to('profile');
+        }
+
+        $targetDir = FCPATH . 'uploads' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'persons';
+        if (!is_dir($targetDir) && !@mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
+            log_message('error', 'Direktori upload foto profil tidak dapat dibuat: ' . $targetDir);
+            slim_alert('error', 'Folder penyimpanan foto tidak tersedia. Hubungi administrator hosting.');
+            return redirect()->to('profile');
+        }
+
+        try {
+            $newFileName = 'profile_' . $uid . '_' . bin2hex(random_bytes(8)) . '.' . $allowedMimes[$mime];
+        } catch (\Throwable $e) {
+            log_message('error', 'Gagal membuat nama file foto profil: ' . $e->getMessage());
+            slim_alert('error', 'Terjadi kesalahan saat menyiapkan foto. Silakan coba lagi.');
+            return redirect()->to('profile');
+        }
+
+        try {
+            $file->move($targetDir, $newFileName);
+
+            $loadModel = new ProfileModel();
+            $updated = $loadModel->update($uid, [
+                'user_image' => $newFileName,
+                'last_update' => date('Y-m-d'),
+            ]);
+
+            if ($updated === false) {
+                @unlink($targetDir . DIRECTORY_SEPARATOR . $newFileName);
+                log_message('error', 'Database gagal menyimpan foto profil untuk user ' . $uid);
+                slim_alert('error', 'Foto sudah diunggah tetapi data profil gagal diperbarui. Silakan coba lagi.');
+                return redirect()->to('profile');
+            }
+
+            // Simpan nama foto di sesi agar komponen lain dapat menggunakannya.
+            $this->session->set('user_image', $newFileName);
+            log_message('info', 'Foto profil berhasil diperbarui untuk user ' . $uid);
+            slim_alert('success', 'Foto profil berhasil diperbarui.');
+        } catch (\Throwable $e) {
+            if (is_file($targetDir . DIRECTORY_SEPARATOR . $newFileName)) {
+                @unlink($targetDir . DIRECTORY_SEPARATOR . $newFileName);
+            }
+            log_message('error', 'Exception upload foto profil user ' . $uid . ': ' . $e->getMessage());
+            slim_alert('error', 'Terjadi kesalahan saat menyimpan foto profil.');
+        }
+
+        return redirect()->to('profile');
+    }
+
+    /**
      * ✅ HELPER: Validasi kekuatan password
      */
     private function validatePasswordStrength(string $password): bool
