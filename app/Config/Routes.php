@@ -66,6 +66,12 @@ foreach ($dirs as $module) {
     }
 }
 
+// Rute eksplisit foto profil sebagai fallback untuk deployment yang belum
+// memuat ulang rute modul. Endpoint unggah tetap menerima POST saja.
+$routes->post('profile/upload-avatar', '\\App\\Modules\\Profile\\Controllers\\ProfileController::uploadAvatar');
+// Jika endpoint dibuka langsung lewat address bar (GET), kembali ke halaman profil.
+$routes->get('profile/upload-avatar', '\\App\\Modules\\Profile\\Controllers\\ProfileController::index');
+
 // ===== 🌲 ROUTE UNGGAH MANDIRI (PUBLIK) =====
 $routes->get('unggah', '\App\Modules\Submission\Controllers\SubmissionController::index');
 $routes->post('unggah/proses', '\App\Modules\Submission\Controllers\SubmissionController::proses');
