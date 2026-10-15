@@ -59,9 +59,12 @@ $sc = $statusColors[$result['overall_status']] ?? $statusColors['belum_lengkap']
                 <div class="yrAlert">
                     <h5><i class="fa fa-certificate"></i> Sertifikat Deposito Digital Siap!</h5>
                     <p>Anda dapat mengunduh sertifikat resmi yang berisi hash SHA-256 dokumen Anda sebagai bukti setoran sah.</p>
-                    <a href="<?= $result['certificate_url'] ?>" class="yrBtnCert">
-                        <i class="fa fa-download"></i> Generate & Download Sertifikat
-                    </a>
+                    <form method="post" action="<?= esc($result['certificate_url']) ?>" style="display:inline-block">
+                        <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
+                        <button type="submit" class="yrBtnCert" style="border:0;cursor:pointer">
+                            <i class="fa fa-download"></i> Generate & Download Sertifikat
+                        </button>
+                    </form>
                 </div>
             <?php endif; ?>
 
