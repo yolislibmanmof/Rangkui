@@ -31,6 +31,7 @@ jobs:
             app/Controllers/InstallController.php
             app/Modules/Submission/Routes.php
             app/Modules/Submission/Controllers/AdminDashboard.php
+            app/Modules/Submission/Controllers/PlagiarismController.php
             app/Modules/Submission/Views/v_admin_dashboard.php
             app/Modules/Login/Controllers/Register.php
             app/Modules/Login/Controllers/Login.php
