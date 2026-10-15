@@ -51,84 +51,65 @@ class BibliographyModel extends BaseModel
         }
         return $return;
     }
-    public function insertBilioSub(string $biblio_id, array $postData, string $fr)
+    public function insertBilioSub($biblio_id, array $postData, bool $fr = false)
     {
+        $relations = [
+            'author'      => ['biblio_author', 'author_id'],
+            'contributor' => ['biblio_contributor', 'contributor_id'],
+            'supervisor'  => ['biblio_supervisor', 'supervisor_id'],
+            'examiner'    => ['biblio_examiner', 'examiner_id'],
+            'topic'       => ['biblio_topic', 'topic_id'],
+        ];
+
+        $this->db->transBegin();
+
         try {
             if ($fr) {
-                $tables = [
-                    'biblio_author',
-                    'biblio_contributor',
-                    'biblio_supervisor',
-                    'biblio_examiner',
-                    'biblio_topic',
-                ];
-
-                foreach ($tables as $table) {
-
-                    $this->db->table($table)->where(['biblio_id' => $biblio_id])->delete();
+                foreach ($relations as [$table, $idColumn]) {
+                    $deleted = $this->db->table($table)->where('biblio_id', $biblio_id)->delete();
+                    if ($deleted === false) {
+                        throw new \\RuntimeException('Gagal menghapus relasi lama dari tabel ' . $table);
+                    }
                 }
             }
-            for ($i = 0; $i < count($postData['author']); $i++) {
-                $this->db->table('biblio_author')->insert([
-                    'biblio_id' => $biblio_id,
-                    'author_id' => $postData['author'][$i],
-                    'level'     => 1,
-                ]);
+
+            foreach ($relations as $postKey => [$table, $idColumn]) {
+                $ids = $postData[$postKey] ?? [];
+                if (!is_array($ids)) {
+                    $ids = ($ids === '' || $ids === null) ? [] : [$ids];
+                }
+
+                foreach (array_unique($ids, SORT_REGULAR) as $id) {
+                    if ($id === '' || $id === null || !is_scalar($id)) {
+                        continue;
+                    }
+
+                    $row = [
+                        'biblio_id' => $biblio_id,
+                        $idColumn   => $id,
+                        'level'     => 1,
+                    ];
+
+                    $inserted = $this->db->table($table)->insert($row);
+                    if ($inserted === false) {
+                        throw new \\RuntimeException('Gagal menyimpan relasi ke tabel ' . $table);
+                    }
+                }
             }
 
-            // Insert contributors
-            for ($i = 0; $i < count($postData['contributor']); $i++) {
-                $this->db->table('biblio_contributor')->insert([
-                    'biblio_id'      => $biblio_id,
-                    'contributor_id' => $postData['contributor'][$i],
-                    'level'          => 1,
-                ]);
+            if ($this->db->transStatus() === false) {
+                throw new \\RuntimeException('Transaksi penyimpanan relasi bibliografi gagal.');
             }
 
-            // Insert supervisors
-            for ($i = 0; $i < count($postData['supervisor']); $i++) {
-                $this->db->table('biblio_supervisor')->insert([
-                    'biblio_id'     => $biblio_id,
-                    'supervisor_id' => $postData['supervisor'][$i],
-                    'level'         => 1,
-                ]);
-            }
-
-            // Insert examiners
-            for ($i = 0; $i < count($postData['examiner']); $i++) {
-                $this->db->table('biblio_examiner')->insert([
-                    'biblio_id'   => $biblio_id,
-                    'examiner_id' => $postData['examiner'][$i],
-                    'level'       => 1,
-                ]);
-            }
-
-        // Insert topics
-        if (!empty($postData['topic']) && is_array($postData['topic'])) {
-            foreach ($postData['topic'] as $topicId) {
-                $this->db->table('biblio_topic')->insert([
-                    'biblio_id' => $biblio_id,
-                    'topic_id'  => $topicId,
-                    'level'     => 1,
-                ]);
-            }
-        } elseif (!empty($postData['topic'])) {
-            $this->db->table('biblio_topic')->insert([
-                'biblio_id' => $biblio_id,
-                'topic_id'  => $postData['topic'],
-                'level'     => 1,
-            ]);
-        }
-
-            // Komit transaksi jika semua berhasil
             $this->db->transCommit();
             return true;
-        } catch (\Exception $e) {
-            // Rollback jika ada kesalahan
+        } catch (\\Throwable $e) {
             $this->db->transRollback();
+            log_message('error', 'insertBilioSub gagal untuk biblio_id ' . $biblio_id . ': ' . $e->getMessage());
             return false;
         }
     }
+
     public function insertFiles(array $data)
     {
         $this->db->transBegin();
