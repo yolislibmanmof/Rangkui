@@ -1,15 +1,20 @@
 -- RANGKUI - CLEAN INSTALL SCHEMA
 -- Contains table definitions and non-personal lookup/menu seeds only.
--- Do not put live database dumps, user accounts, uploaded documents, or scan histories in this file.
+-- No production user accounts, documents, uploaded files, logs, or scan history.
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
+
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
-SET FOREIGN_KEY_CHECKS = 0;
 
+--
+-- Database: `rangkui`
+--
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `backup_log`
@@ -23,7 +28,261 @@ CREATE TABLE `backup_log` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
 
 --
+-- Table structure for table `biblio`
+--
 
+CREATE TABLE `biblio` (
+  `biblio_id` int(11) NOT NULL,
+  `unique_id` int(11) NOT NULL,
+  `gmd_id` int(11) DEFAULT NULL,
+  `item_type_id` int(11) DEFAULT NULL,
+  `title` text COLLATE utf8_unicode_ci NOT NULL,
+  `sor` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `edition` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `student_id` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `cp_email` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `departement` varchar(250) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `code_ministry` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `isbn_issn` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `publisher_name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `publish_place` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `publisher_id` int(11) DEFAULT NULL,
+  `publish_year` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `collation` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `series_title` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `call_number` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `authors_text` text COLLATE utf8_unicode_ci,
+  `supervisors_text` text COLLATE utf8_unicode_ci,
+  `examiners_text` text COLLATE utf8_unicode_ci,
+  `subjects_text` text COLLATE utf8_unicode_ci,
+  `language_id` char(5) COLLATE utf8_unicode_ci DEFAULT 'en',
+  `copyright_id` int(11) DEFAULT NULL,
+  `license_id` int(11) NOT NULL,
+  `source` varchar(3) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `publish_place_id` int(11) DEFAULT NULL,
+  `classification` varchar(40) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8_unicode_ci,
+  `notes_en` text COLLATE utf8_unicode_ci,
+  `image` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `file_att` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `url_crossref` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `opac_hide` smallint(6) DEFAULT '0',
+  `approval_status` enum('draft','pending','approved','published') COLLATE utf8_unicode_ci DEFAULT 'draft',
+  `integrity_similarity` decimal(5,2) DEFAULT NULL,
+  `integrity_ai_risk` decimal(5,2) DEFAULT NULL,
+  `integrity_last_scan` datetime DEFAULT NULL,
+  `submission_id` int(11) DEFAULT NULL,
+  `promoted` smallint(6) DEFAULT '0',
+  `labels` text COLLATE utf8_unicode_ci,
+  `frequency_id` int(11) NOT NULL DEFAULT '0',
+  `spec_detail_info` text COLLATE utf8_unicode_ci,
+  `input_date` datetime DEFAULT NULL,
+  `last_update` datetime DEFAULT NULL,
+  `uid` int(11) DEFAULT NULL,
+  `step` smallint(6) NOT NULL DEFAULT '1',
+  `hits` int(11) DEFAULT '0'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `biblio_attachment`
+--
+
+CREATE TABLE `biblio_attachment` (
+  `biblio_id` int(11) NOT NULL,
+  `file_id` int(11) NOT NULL,
+  `access_type` enum('public','private') COLLATE utf8_unicode_ci NOT NULL,
+  `access_limit` text COLLATE utf8_unicode_ci
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `biblio_author`
+--
+
+CREATE TABLE `biblio_author` (
+  `biblio_id` int(11) NOT NULL DEFAULT '0',
+  `author_id` int(11) NOT NULL DEFAULT '0',
+  `level` int(11) NOT NULL DEFAULT '1'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=FIXED;
+
+--
+-- Table structure for table `biblio_certificates`
+--
+
+CREATE TABLE `biblio_certificates` (
+  `cert_id` int(11) NOT NULL,
+  `biblio_id` int(11) NOT NULL,
+  `certificate_no` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `sha256_hash` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `issued_at` datetime NOT NULL,
+  `issued_by` int(11) DEFAULT NULL,
+  `pdf_path` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `download_count` int(11) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `biblio_contributor`
+--
+
+CREATE TABLE `biblio_contributor` (
+  `biblio_id` int(11) NOT NULL,
+  `contributor_id` int(11) NOT NULL,
+  `level` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `biblio_count`
+--
+
+CREATE TABLE `biblio_count` (
+  `biblio_id` int(11) NOT NULL,
+  `file_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Table structure for table `biblio_custom`
+--
+
+CREATE TABLE `biblio_custom` (
+  `biblio_id` int(11) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='one to one relation with real biblio table' ROW_FORMAT=FIXED;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `biblio_examiner`
+--
+
+CREATE TABLE `biblio_examiner` (
+  `biblio_id` int(11) NOT NULL DEFAULT '0',
+  `examiner_id` int(11) NOT NULL DEFAULT '0',
+  `level` int(11) NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `biblio_supervisor`
+--
+
+CREATE TABLE `biblio_supervisor` (
+  `biblio_id` int(11) NOT NULL DEFAULT '0',
+  `supervisor_id` int(11) NOT NULL DEFAULT '0',
+  `level` int(11) NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `biblio_topic`
+--
+
+CREATE TABLE `biblio_topic` (
+  `biblio_id` int(11) NOT NULL DEFAULT '0',
+  `topic_id` int(11) NOT NULL DEFAULT '0',
+  `level` int(11) NOT NULL DEFAULT '1'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=FIXED;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `comment`
+--
+
+CREATE TABLE `comment` (
+  `comment_id` int(11) NOT NULL,
+  `biblio_id` int(11) NOT NULL,
+  `member_id` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `comment` text COLLATE utf8_unicode_ci NOT NULL,
+  `input_date` datetime DEFAULT NULL,
+  `last_update` datetime DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `content`
+--
+
+CREATE TABLE `content` (
+  `content_id` int(11) NOT NULL,
+  `content_title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `content_desc` text COLLATE utf8_unicode_ci NOT NULL,
+  `content_path` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `input_date` datetime NOT NULL,
+  `last_update` datetime NOT NULL,
+  `content_ownpage` enum('1','2') COLLATE utf8_unicode_ci NOT NULL DEFAULT '1'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dosen_bkd_rekap`
+--
+
+CREATE TABLE `dosen_bkd_rekap` (
+  `rekap_id` int(11) NOT NULL,
+  `dosen_id` int(11) NOT NULL,
+  `semester` varchar(10) COLLATE utf8_unicode_ci NOT NULL,
+  `total_pembimbing` int(11) DEFAULT '0',
+  `total_penguji` int(11) DEFAULT '0',
+  `total_kontributor` int(11) DEFAULT '0',
+  `sks_pembimbing` decimal(5,2) DEFAULT '0.00',
+  `sks_penguji` decimal(5,2) DEFAULT '0.00',
+  `total_sks` decimal(5,2) DEFAULT '0.00',
+  `generated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `files`
+--
+
+CREATE TABLE `files` (
+  `file_id` int(11) NOT NULL,
+  `file_title` text COLLATE utf8_unicode_ci NOT NULL,
+  `file_name` text COLLATE utf8_unicode_ci NOT NULL,
+  `file_url` text COLLATE utf8_unicode_ci,
+  `file_dir` text COLLATE utf8_unicode_ci,
+  `mime_type` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `file_desc` text COLLATE utf8_unicode_ci,
+  `uploader_id` int(11) NOT NULL,
+  `input_date` datetime NOT NULL,
+  `last_update` datetime NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `fines`
+--
+
+CREATE TABLE `fines` (
+  `fines_id` int(11) NOT NULL,
+  `fines_date` date NOT NULL,
+  `member_id` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `debet` int(11) DEFAULT '0',
+  `credit` int(11) DEFAULT '0',
+  `description` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `group_access`
+--
+
+CREATE TABLE `group_access` (
+  `group_id` int(11) NOT NULL,
+  `module_id` int(11) NOT NULL,
+  `r` int(11) NOT NULL DEFAULT '0',
+  `w` int(11) NOT NULL DEFAULT '0'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=FIXED;
+
+--
 -- Dumping data for table `group_access`
 --
 
@@ -259,7 +518,176 @@ CREATE TABLE `group_access_backup` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
+-- Table structure for table `holiday`
+--
 
+CREATE TABLE `holiday` (
+  `holiday_id` int(11) NOT NULL,
+  `holiday_dayname` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `holiday_date` date DEFAULT NULL,
+  `description` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `item`
+--
+
+CREATE TABLE `item` (
+  `item_id` int(11) NOT NULL,
+  `biblio_id` int(11) DEFAULT NULL,
+  `call_number` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `coll_type_id` int(11) DEFAULT NULL,
+  `item_code` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `inventory_code` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `received_date` date DEFAULT NULL,
+  `supplier_id` varchar(6) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `order_no` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `location_id` varchar(3) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `order_date` date DEFAULT NULL,
+  `item_status_id` char(3) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `site` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `source` int(11) NOT NULL DEFAULT '0',
+  `invoice` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `price` int(11) DEFAULT NULL,
+  `price_currency` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `invoice_date` date DEFAULT NULL,
+  `input_date` datetime NOT NULL,
+  `last_update` datetime DEFAULT NULL,
+  `uid` int(11) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `kardex`
+--
+
+CREATE TABLE `kardex` (
+  `kardex_id` int(11) NOT NULL,
+  `date_expected` date NOT NULL,
+  `date_received` date DEFAULT NULL,
+  `seq_number` varchar(25) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8_unicode_ci,
+  `serial_id` int(11) DEFAULT NULL,
+  `input_date` date NOT NULL,
+  `last_update` date NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `loan`
+--
+
+CREATE TABLE `loan` (
+  `loan_id` int(11) NOT NULL,
+  `item_code` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `member_id` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `loan_date` date NOT NULL,
+  `due_date` date NOT NULL,
+  `renewed` int(11) NOT NULL DEFAULT '0',
+  `loan_rules_id` int(11) NOT NULL DEFAULT '0',
+  `actual` date DEFAULT NULL,
+  `is_lent` int(11) NOT NULL DEFAULT '0',
+  `is_return` int(11) NOT NULL DEFAULT '0',
+  `return_date` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `login_logs`
+--
+
+CREATE TABLE `login_logs` (
+  `log_id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `ip_address` varchar(45) NOT NULL,
+  `user_agent` varchar(500) DEFAULT NULL,
+  `status` enum('SUCCESS','FAILED') NOT NULL,
+  `login_time` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `long_pattern`
+--
+
+CREATE TABLE `long_pattern` (
+  `pattern_id` int(11) NOT NULL,
+  `pattern_prefix` varchar(5) DEFAULT NULL,
+  `pattern_zero` int(11) DEFAULT NULL,
+  `pattern_suffix` varchar(5) DEFAULT NULL,
+  `input_date` date DEFAULT NULL,
+  `last_update` datetime DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `member`
+--
+
+CREATE TABLE `member` (
+  `member_id` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `member_name` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `institution` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `gender` int(11) NOT NULL,
+  `birth_date` date DEFAULT NULL,
+  `member_type_id` int(11) DEFAULT NULL,
+  `member_category` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `approval_note` text COLLATE utf8_unicode_ci,
+  `member_address` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `member_mail_address` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `member_email` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `postal_code` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `inst_name` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `is_new` int(11) DEFAULT NULL,
+  `member_image` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `pin` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `member_phone` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `member_fax` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `member_since_date` date DEFAULT NULL,
+  `register_date` date DEFAULT NULL,
+  `expire_date` date NOT NULL,
+  `member_notes` text COLLATE utf8_unicode_ci,
+  `is_pending` smallint(6) NOT NULL DEFAULT '0',
+  `mpasswd` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `last_login` datetime DEFAULT NULL,
+  `last_login_ip` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `input_date` date DEFAULT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `member_custom`
+--
+
+CREATE TABLE `member_custom` (
+  `member_id` varchar(20) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='one to one relation with real member table' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `member_type`
+--
+
+CREATE TABLE `member_type` (
+  `member_type_id` int(11) NOT NULL,
+  `member_type_name` varchar(100) NOT NULL,
+  `loan_periode` smallint(6) DEFAULT '7',
+  `enable_reserve` tinyint(1) DEFAULT '1',
+  `reserve_limit` smallint(6) DEFAULT '3',
+  `fine_each_day` decimal(10,2) DEFAULT '0.00',
+  `grace_periode` smallint(6) DEFAULT '0',
+  `reborrow_limit` smallint(6) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
 -- Dumping data for table `member_type`
 --
 
@@ -284,7 +712,57 @@ CREATE TABLE `mst_author` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
 
 --
+-- Table structure for table `mst_code_ministry`
+--
 
+CREATE TABLE `mst_code_ministry` (
+  `code_ministry` varchar(20) NOT NULL,
+  `name_prodi` varchar(100) NOT NULL,
+  `degree` varchar(20) NOT NULL,
+  `university` varchar(100) NOT NULL,
+  `input_date` date NOT NULL,
+  `last_update` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `mst_coll_type`
+--
+
+CREATE TABLE `mst_coll_type` (
+  `coll_type_id` int(11) NOT NULL,
+  `coll_type_name` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
+  `input_date` date DEFAULT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `mst_contributor`
+--
+
+CREATE TABLE `mst_contributor` (
+  `contributor_id` int(11) NOT NULL,
+  `contributor_name` varchar(100) NOT NULL,
+  `contributor_type` enum('p','o','c') NOT NULL,
+  `input_date` date NOT NULL,
+  `last_update` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
+
+--
+-- Table structure for table `mst_copyright`
+--
+
+CREATE TABLE `mst_copyright` (
+  `copyright_id` int(11) NOT NULL,
+  `copyright_name` varchar(100) NOT NULL,
+  `input_date` date NOT NULL,
+  `last_update` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
+
+--
 -- Dumping data for table `mst_copyright`
 --
 
@@ -310,7 +788,35 @@ CREATE TABLE `mst_examiner` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 --
+-- Table structure for table `mst_frequency`
+--
 
+CREATE TABLE `mst_frequency` (
+  `frequency_id` int(11) NOT NULL,
+  `frequency` varchar(25) COLLATE utf8_unicode_ci NOT NULL,
+  `language_prefix` varchar(5) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `time_increment` smallint(6) DEFAULT NULL,
+  `time_unit` enum('day','week','month','year') COLLATE utf8_unicode_ci DEFAULT 'day',
+  `input_date` date NOT NULL,
+  `last_update` date NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `mst_gmd`
+--
+
+CREATE TABLE `mst_gmd` (
+  `gmd_id` int(11) NOT NULL,
+  `gmd_code` varchar(3) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `gmd_name` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
+  `icon_image` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `input_date` date NOT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
 -- Dumping data for table `mst_gmd`
 --
 
@@ -365,7 +871,6 @@ CREATE TABLE `mst_icon` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 --
-
 -- Dumping data for table `mst_icon`
 --
 
@@ -1021,7 +1526,6 @@ CREATE TABLE `mst_item_type` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 --
-
 -- Dumping data for table `mst_item_type`
 --
 
@@ -1060,7 +1564,6 @@ CREATE TABLE `mst_language` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
 
 --
-
 -- Dumping data for table `mst_language`
 --
 
@@ -1083,7 +1586,6 @@ CREATE TABLE `mst_license` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 --
-
 -- Dumping data for table `mst_license`
 --
 
@@ -1124,7 +1626,25 @@ CREATE TABLE `mst_location` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
 
 --
+-- Table structure for table `mst_member_type`
+--
 
+CREATE TABLE `mst_member_type` (
+  `member_type_id` int(11) NOT NULL,
+  `member_type_name` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `loan_limit` int(11) NOT NULL,
+  `loan_periode` int(11) NOT NULL,
+  `enable_reserve` int(11) NOT NULL DEFAULT '0',
+  `reserve_limit` int(11) NOT NULL DEFAULT '0',
+  `member_periode` int(11) NOT NULL,
+  `reborrow_limit` int(11) NOT NULL,
+  `fine_each_day` int(11) NOT NULL,
+  `grace_periode` int(11) DEFAULT '0',
+  `input_date` date NOT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
 -- Dumping data for table `mst_member_type`
 --
 
@@ -1151,7 +1671,6 @@ CREATE TABLE `mst_menu` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 --
-
 -- Dumping data for table `mst_menu`
 --
 
@@ -1228,7 +1747,6 @@ CREATE TABLE `mst_module` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
 
 --
-
 -- Dumping data for table `mst_module`
 --
 
@@ -1253,7 +1771,245 @@ CREATE TABLE `mst_place` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
 
 --
+-- Table structure for table `mst_publisher`
+--
 
+CREATE TABLE `mst_publisher` (
+  `publisher_id` int(11) NOT NULL,
+  `publisher_name` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `input_date` date DEFAULT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `mst_supervisor`
+--
+
+CREATE TABLE `mst_supervisor` (
+  `supervisor_id` int(11) NOT NULL,
+  `supervisor_name` varchar(100) DEFAULT NULL,
+  `supervisor_number` varchar(100) NOT NULL,
+  `supervisor_year` varchar(20) DEFAULT NULL,
+  `supervisor_type` enum('p','o','c') DEFAULT NULL,
+  `supervisor_list` varchar(20) DEFAULT NULL,
+  `input_date` date NOT NULL,
+  `last_update` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
+
+--
+-- Table structure for table `mst_supplier`
+--
+
+CREATE TABLE `mst_supplier` (
+  `supplier_id` int(11) NOT NULL,
+  `supplier_name` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `address` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `postal_code` char(10) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `phone` char(14) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `contact` char(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `fax` char(14) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `account` char(12) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `e_mail` char(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `input_date` date DEFAULT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `mst_topic`
+--
+
+CREATE TABLE `mst_topic` (
+  `topic_id` int(11) NOT NULL,
+  `topic` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `topic_type` enum('t','g','n','tm','gr','oc') COLLATE utf8_unicode_ci NOT NULL,
+  `auth_list` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `classification` varchar(50) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Classification Code',
+  `input_date` date DEFAULT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `reserve`
+--
+
+CREATE TABLE `reserve` (
+  `reserve_id` int(11) NOT NULL,
+  `member_id` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `biblio_id` int(11) NOT NULL,
+  `item_code` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `reserve_date` datetime NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `search_biblio`
+--
+
+CREATE TABLE `search_biblio` (
+  `biblio_id` int(11) NOT NULL,
+  `title` text COLLATE utf8_unicode_ci,
+  `edition` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `isbn_issn` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `author` text COLLATE utf8_unicode_ci,
+  `examiner` text COLLATE utf8_unicode_ci,
+  `supervisor` text COLLATE utf8_unicode_ci,
+  `contributor` text COLLATE utf8_unicode_ci,
+  `topic` text COLLATE utf8_unicode_ci,
+  `gmd` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `publisher` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `publish_place` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `language` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `classification` varchar(40) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `spec_detail_info` text COLLATE utf8_unicode_ci,
+  `location` text COLLATE utf8_unicode_ci,
+  `publish_year` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8_unicode_ci,
+  `series_title` text COLLATE utf8_unicode_ci,
+  `items` text COLLATE utf8_unicode_ci,
+  `collection_types` text COLLATE utf8_unicode_ci,
+  `call_number` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `opac_hide` smallint(1) NOT NULL DEFAULT '0',
+  `promoted` smallint(1) NOT NULL DEFAULT '0',
+  `labels` text COLLATE utf8_unicode_ci,
+  `collation` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `image` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `input_date` datetime DEFAULT NULL,
+  `last_update` datetime DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='index table for advance searching technique for SLiMS' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `serial`
+--
+
+CREATE TABLE `serial` (
+  `serial_id` int(11) NOT NULL,
+  `date_start` date NOT NULL,
+  `date_end` date DEFAULT NULL,
+  `period` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8_unicode_ci,
+  `biblio_id` int(11) DEFAULT NULL,
+  `gmd_id` int(11) DEFAULT NULL,
+  `input_date` date NOT NULL,
+  `last_update` date NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `setting`
+--
+
+CREATE TABLE `setting` (
+  `setting_id` int(11) NOT NULL,
+  `setting_name` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
+  `setting_value` text COLLATE utf8_unicode_ci
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `stock_take`
+--
+
+CREATE TABLE `stock_take` (
+  `stock_take_id` int(11) NOT NULL,
+  `stock_take_name` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
+  `start_date` datetime NOT NULL,
+  `end_date` datetime DEFAULT NULL,
+  `init_user` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `total_item_stock_taked` int(11) DEFAULT NULL,
+  `total_item_lost` int(11) DEFAULT NULL,
+  `total_item_exists` int(11) DEFAULT '0',
+  `total_item_loan` int(11) DEFAULT NULL,
+  `stock_take_users` mediumtext COLLATE utf8_unicode_ci,
+  `is_active` int(11) NOT NULL DEFAULT '0',
+  `report_file` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `stock_take_item`
+--
+
+CREATE TABLE `stock_take_item` (
+  `stock_take_id` int(11) NOT NULL,
+  `item_id` int(11) NOT NULL,
+  `item_code` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `gmd_name` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `classification` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `coll_type_name` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `call_number` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `location` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `status` enum('e','m','u','l') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'm',
+  `checked_by` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `last_update` datetime DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `system_log`
+--
+
+CREATE TABLE `system_log` (
+  `log_id` int(11) NOT NULL,
+  `log_type` enum('staff','member','system') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'staff',
+  `id` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `log_location` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `log_msg` text COLLATE utf8_unicode_ci NOT NULL,
+  `log_date` datetime NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `system_settings`
+--
+
+CREATE TABLE `system_settings` (
+  `setting_id` int(11) NOT NULL,
+  `setting_key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `setting_value` text COLLATE utf8mb4_unicode_ci,
+  `setting_type` enum('string','number','boolean','json') COLLATE utf8mb4_unicode_ci DEFAULT 'string',
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `user`
+--
+
+CREATE TABLE `user` (
+  `user_id` int(11) NOT NULL,
+  `username` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `realname` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `passwd` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `email` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `user_type` smallint(6) DEFAULT NULL,
+  `user_image` varchar(250) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `social_media` text COLLATE utf8_unicode_ci,
+  `last_login` datetime DEFAULT NULL,
+  `last_login_ip` char(15) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `groups` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `input_date` date DEFAULT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Table structure for table `user_group`
+--
+
+CREATE TABLE `user_group` (
+  `group_id` int(11) NOT NULL,
+  `group_name` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
+  `input_date` date DEFAULT NULL,
+  `last_update` date DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC;
+
+--
 -- Dumping data for table `user_group`
 --
 
@@ -1294,8 +2050,160 @@ CREATE TABLE `xu_approval_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
+-- Table structure for table `xu_approval_step`
+--
 
+CREATE TABLE `xu_approval_step` (
+  `step_id` int(11) NOT NULL,
+  `submission_id` int(11) NOT NULL,
+  `stage_order` tinyint(4) NOT NULL DEFAULT '1',
+  `stage_name` varchar(50) NOT NULL,
+  `approver_name` varchar(100) DEFAULT NULL,
+  `approver_email` varchar(100) DEFAULT NULL,
+  `approver_phone` varchar(20) DEFAULT NULL,
+  `token` varchar(64) NOT NULL,
+  `status` enum('pending','setuju','revisi','tolak') DEFAULT 'pending',
+  `note` text,
+  `acted_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- Table structure for table `xu_fingerprint`
+--
+
+CREATE TABLE `xu_fingerprint` (
+  `fingerprint_id` int(11) NOT NULL,
+  `biblio_id` int(11) NOT NULL,
+  `text_hash` char(64) NOT NULL COMMENT 'SHA256 dari teks mentah',
+  `word_count` int(11) DEFAULT '0',
+  `unique_words` int(11) DEFAULT '0',
+  `ttr` decimal(5,4) DEFAULT '0.0000' COMMENT 'Type-Token Ratio',
+  `entropy` decimal(6,4) DEFAULT '0.0000' COMMENT 'Shannon entropy',
+  `burstiness` decimal(6,4) DEFAULT '0.0000' COMMENT 'Std dev panjang kalimat',
+  `avg_sentence_len` decimal(6,2) DEFAULT '0.00',
+  `lexical_density` decimal(5,4) DEFAULT '0.0000',
+  `ngram_signature` mediumtext COMMENT 'JSON hash set n-gram',
+  `scan_count` int(11) DEFAULT '1',
+  `first_scanned` datetime DEFAULT CURRENT_TIMESTAMP,
+  `last_scanned` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Table structure for table `xu_plagiarism_checks`
+--
+
+CREATE TABLE `xu_plagiarism_checks` (
+  `check_id` int(11) NOT NULL,
+  `token` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `student_id` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `file_name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `similarity_score` decimal(5,2) NOT NULL DEFAULT '0.00',
+  `threshold` decimal(5,2) NOT NULL DEFAULT '25.00',
+  `status` enum('lulus','gagal') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'gagal',
+  `matches_json` text COLLATE utf8_unicode_ci,
+  `snippets_json` text COLLATE utf8_unicode_ci,
+  `created_at` datetime DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+--
+-- Table structure for table `xu_plagiarism_fingerprints`
+--
+
+CREATE TABLE `xu_plagiarism_fingerprints` (
+  `fp_id` int(11) NOT NULL,
+  `biblio_id` int(11) NOT NULL,
+  `sig_text` longtext COLLATE utf8_unicode_ci NOT NULL,
+  `hash_count` int(11) NOT NULL DEFAULT '0',
+  `word_count` int(11) NOT NULL DEFAULT '0',
+  `source_file` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `xu_reg_settings`
+--
+
+CREATE TABLE `xu_reg_settings` (
+  `id` int(11) NOT NULL,
+  `reg_open` tinyint(1) NOT NULL DEFAULT '1',
+  `warna_mahasiswa` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'biru',
+  `warna_dosen` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'merah',
+  `warna_staff` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'merah',
+  `wa_template` text COLLATE utf8mb4_unicode_ci,
+  `input_date` datetime DEFAULT NULL,
+  `last_update` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `xu_scan_history`
+--
+
+CREATE TABLE `xu_scan_history` (
+  `scan_id` int(11) NOT NULL,
+  `biblio_id` int(11) NOT NULL,
+  `scan_type` enum('similarity','ai_writing','full') DEFAULT 'full',
+  `similarity_score` decimal(5,2) DEFAULT '0.00',
+  `ai_risk_score` decimal(5,2) DEFAULT '0.00',
+  `top_match_biblio_id` int(11) DEFAULT NULL,
+  `top_match_title` varchar(255) DEFAULT NULL,
+  `top_match_percent` decimal(5,2) DEFAULT '0.00',
+  `indicators` mediumtext COMMENT 'JSON detail indikator',
+  `scanned_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Table structure for table `xu_similarity_pairs`
+--
+
+CREATE TABLE `xu_similarity_pairs` (
+  `pair_id` int(11) NOT NULL,
+  `biblio_a` int(11) NOT NULL,
+  `biblio_b` int(11) NOT NULL,
+  `jaccard_score` decimal(5,4) DEFAULT '0.0000',
+  `ngram_overlap` int(11) DEFAULT '0',
+  `shared_fragments` mediumtext COMMENT 'JSON cuplikan teks mirip',
+  `compared_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Table structure for table `xu_submission`
+--
+
+CREATE TABLE `xu_submission` (
+  `submission_id` int(11) NOT NULL,
+  `biblio_id` int(11) NOT NULL,
+  `member_id` varchar(30) DEFAULT NULL,
+  `student_name` varchar(150) DEFAULT NULL,
+  `current_stage` enum('pembimbing','penguji','admin','selesai') DEFAULT 'pembimbing',
+  `status` enum('menunggu','revisi','disetujui','ditolak','terbit') DEFAULT 'menunggu',
+  `note` text,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Table structure for table `yudisium_checklist`
+--
+
+CREATE TABLE `yudisium_checklist` (
+  `checklist_id` int(11) NOT NULL,
+  `student_id` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `biblio_id` int(11) DEFAULT NULL,
+  `check_document_submitted` tinyint(1) DEFAULT '0',
+  `check_document_approved` tinyint(1) DEFAULT '0',
+  `check_similarity_ok` tinyint(1) DEFAULT '0',
+  `check_similarity_score` decimal(5,2) DEFAULT NULL,
+  `check_library_clearance` tinyint(1) DEFAULT '0',
+  `check_admin_approved` tinyint(1) DEFAULT '0',
+  `overall_status` enum('belum_lengkap','pending','lulus') COLLATE utf8_unicode_ci DEFAULT 'belum_lengkap',
+  `last_checked` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+--
 -- Indexes for dumped tables
 --
 
