@@ -30,6 +30,8 @@ jobs:
             app/Config/Routes.php
             app/Controllers/InstallController.php
             app/Modules/Submission/Routes.php
+            app/Modules/Bibliography/Controllers/ApprovalController.php
+            app/Modules/Login/Routes.php
             app/Modules/Submission/Controllers/AdminDashboard.php
             app/Modules/Submission/Controllers/PlagiarismController.php
             app/Modules/Submission/Views/v_admin_dashboard.php
