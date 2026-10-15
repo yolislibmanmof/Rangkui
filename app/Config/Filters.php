@@ -118,6 +118,15 @@ class Filters extends BaseFilters
                 'master/*',
                 'sistem/*',
                 'report/*',
+                // Lindungi endpoint administratif yang berada di luar grup modul biasa.
+                'submission/dashboard',
+                'submission/approve/*',
+                'submission/reject/*',
+                'submission/requestRevisi/*',
+                'submission/admin/*',
+                'admin-dashboard/*',
+                'plagiarism/audit',
+                'bkd/*',
             ]
         ]
     ];
