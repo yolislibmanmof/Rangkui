@@ -117,6 +117,22 @@ if (!function_exists('_render')) {
 if (!function_exists('_renderView')) {
     function _renderView(string $view, string $title, array $content, array $js = [], array $css = [])
     {
+        // Samakan brand judul tab pada semua halaman publik yang masih memakai judul default DIFOSS.
+        // Bisa diubah lewat .env dengan app.siteName = 'Nama Brand Anda'.
+        $siteBrand = trim((string) env('app.siteName', 'ETD System'));
+        if ($siteBrand === '') {
+            $siteBrand = 'ETD System';
+        }
+        $normalizedTitle = preg_replace(
+            '/^\s*DIFOSS(?:\s+RANGKUI)?(?=\s*(?:[-—:|]|$))/iu',
+            $siteBrand,
+            $title,
+            1
+        );
+        if (is_string($normalizedTitle)) {
+            $title = $normalizedTitle;
+        }
+
         _renderTemplate(
             $view,
             $title,
