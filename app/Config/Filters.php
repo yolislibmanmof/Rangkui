@@ -127,6 +127,8 @@ class Filters extends BaseFilters
                 'admin-dashboard/*',
                 'plagiarism/audit',
                 'bkd/*',
+                // Penerbitan sertifikat mengubah data dan hanya boleh dilakukan setelah login.
+                'yudisium/generate-certificate/*',
             ]
         ]
     ];
