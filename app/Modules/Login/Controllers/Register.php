@@ -59,8 +59,9 @@ class Register extends BaseController
             'member_email' => 'required|valid_email|is_unique[member.member_email]',
             'member_phone' => 'required',
             'member_category' => 'required',
-            'member_type_id'  => 'required',
-            'mPasswd' => 'required|min_length[6]',
+            'member_type_id'  => 'required|integer|is_not_unique[mst_member_type.member_type_id]',
+            'mPasswd' => 'required|min_length[8]|max_length[72]',
+            'member_image' => 'uploaded[member_image]|is_image[member_image]|mime_in[member_image,image/jpg,image/jpeg,image/png,image/webp]|max_size[member_image,2048]|max_dims[member_image,4000,4000]',
         ];
 
         if (!$this->validate($rules)) {
@@ -73,12 +74,37 @@ class Register extends BaseController
             return redirect()->to('daftar')->with('errors', ['member_image' => 'Foto wajib diunggah.'])->with('old', $post);
         }
 
-        // Simpan foto
-        $ext = $file->getClientExtension();
-        $fotoName = 'member_online_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-        $path = './uploads/images/persons/';
-        if (!is_dir($path)) mkdir($path, 0777, TRUE);
-        $file->move($path, $fotoName);
+        // Validasi MIME server dan gunakan ekstensi berdasarkan isi file, bukan nama dari browser.
+        $mime = strtolower((string) $file->getMimeType());
+        $allowedMimes = [
+            'image/jpeg' => 'jpg',
+            'image/jpg'  => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+        ];
+        if (!isset($allowedMimes[$mime])) {
+            return redirect()->to('daftar')
+                ->with('errors', ['member_image' => 'Foto harus berupa JPG, PNG, atau WEBP.'])
+                ->with('old', $post);
+        }
+
+        $fotoName = 'member_online_' . bin2hex(random_bytes(12)) . '.' . $allowedMimes[$mime];
+        $path = FCPATH . 'uploads/images/persons' . DIRECTORY_SEPARATOR;
+        if (!is_dir($path) && !mkdir($path, 0755, true) && !is_dir($path)) {
+            log_message('error', 'Direktori upload pendaftaran anggota tidak dapat dibuat.');
+            return redirect()->to('daftar')
+                ->with('errors', ['member_image' => 'Folder penyimpanan foto tidak tersedia.'])
+                ->with('old', $post);
+        }
+
+        try {
+            $file->move($path, $fotoName);
+        } catch (\\Throwable $e) {
+            log_message('error', 'Gagal menyimpan foto pendaftaran anggota: ' . $e->getMessage());
+            return redirect()->to('daftar')
+                ->with('errors', ['member_image' => 'Foto gagal disimpan. Silakan coba lagi.'])
+                ->with('old', $post);
+        }
 
         // Masa berlaku 1 tahun
         $expire = new \DateTime();
@@ -100,7 +126,7 @@ class Register extends BaseController
             'is_pending'       => 1,
             'mpasswd'          => password_hash($post['mPasswd'], PASSWORD_BCRYPT, $this->options),
             'member_image'     => $fotoName,
-            'pin'              => substr(md5(uniqid()), 0, 6),
+            'pin'              => (string) random_int(100000, 999999),
         ];
 
         $member = new MembershipModel();
@@ -108,6 +134,12 @@ class Register extends BaseController
 
         if ($ok) {
             return redirect()->to('daftar/sukses');
+        }
+
+        // Jangan tinggalkan foto yatim bila penyimpanan data anggota gagal.
+        $savedPhoto = $path . $fotoName;
+        if (is_file($savedPhoto)) {
+            @unlink($savedPhoto);
         }
         return redirect()->to('daftar')->with('errors', ['umum' => 'Gagal menyimpan pendaftaran. Coba lagi.'])->with('old', $post);
     }
