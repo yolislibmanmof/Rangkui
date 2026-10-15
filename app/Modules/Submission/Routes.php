@@ -3,7 +3,7 @@
 $routes->group('unggah', ['namespace' => 'App\Modules\Submission\Controllers'], function ($routes) {
     // Public submission
     $routes->get('', 'SubmissionController::index');
-    $routes->post('proses', 'SubmissionController::proses');
+    $routes->post('proses', 'SubmissionController::proses', ['filter' => 'csrf']);
     $routes->get('sukses', 'SubmissionController::sukses');
 });
 
