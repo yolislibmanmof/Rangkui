@@ -74,9 +74,9 @@ $routes->get('profile/upload-avatar', '\\App\\Modules\\Profile\\Controllers\\Pro
 
 // ===== 🌲 ROUTE UNGGAH MANDIRI (PUBLIK) =====
 $routes->get('unggah', '\App\Modules\Submission\Controllers\SubmissionController::index');
-$routes->post('unggah/proses', '\App\Modules\Submission\Controllers\SubmissionController::proses');
+$routes->post('unggah/proses', '\App\Modules\Submission\Controllers\SubmissionController::proses', ['filter' => 'csrf']);
 $routes->get('unggah/sukses', '\App\Modules\Submission\Controllers\SubmissionController::sukses'); 
-$routes->post('submission/extract-ai', '\App\Modules\Submission\Controllers\SubmissionController::extract_ai');
+$routes->post('submission/extract-ai', '\App\Modules\Submission\Controllers\SubmissionController::extract_ai', ['filter' => 'csrf']);
 
 // Dashboard Submission Admin
 $routes->get('submission/dashboard', '\App\Modules\Submission\Controllers\AdminDashboard::index');
