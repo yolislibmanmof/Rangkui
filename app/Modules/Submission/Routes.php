@@ -11,6 +11,6 @@ $routes->group('submission/admin', ['namespace' => 'App\Modules\Submission\Contr
     // Admin dashboard
     $routes->get('dashboard', 'AdminDashboard::index');
     $routes->post('approve/(:num)', 'AdminDashboard::approve/$1', ['filter' => 'csrf']);
-    $routes->post('reject/(:num)', 'AdminDashboard::reject/$1');
-    $routes->post('request-revisi/(:num)', 'AdminDashboard::requestRevisi/$1');
+    $routes->post('reject/(:num)', 'AdminDashboard::reject/$1', ['filter' => 'csrf']);
+    $routes->post('request-revisi/(:num)', 'AdminDashboard::requestRevisi/$1', ['filter' => 'csrf']);
 });
