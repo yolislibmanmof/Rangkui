@@ -1,0 +1,16 @@
+# Uploaded content is data, never executable code.
+Options -Indexes
+
+# Deny direct access to scripts that could be executed or interpreted by the server.
+<FilesMatch "(?i)\.(?:php[0-9]*|phtml|phar|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>
+
+# Database exports and backup artifacts must not be downloadable from the webroot.
+<FilesMatch "(?i)\.(?:sql(?:\.(?:gz|tar\.gz))?|dump|bak)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "(?i)^(?:backup|db_).+\.(?:gz|zip|7z|rar)$">
+    Require all denied
+</FilesMatch>
