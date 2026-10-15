@@ -17,5 +17,5 @@ $routes->group('daftar', ['namespace' => 'App\Modules\Login\Controllers'], funct
     $routes->get('/', 'Register::index');
     $routes->get('cek', 'Register::cek');
     $routes->get('sukses', 'Register::sukses');
-    $routes->post('/', 'Register::save');
+    $routes->post('/', 'Register::save', ['filter' => 'csrf']);
 });
