@@ -60,6 +60,8 @@ if (!function_exists('_renderTemplate')) {
         // Normalize view path
         $view = str_replace("/", DIRECTORY_SEPARATOR, $view);
         $contentPath = $module . DIRECTORY_SEPARATOR . 'Views' . DIRECTORY_SEPARATOR;
+        // Kirim namespace view agar subview/modal dapat dipanggil dari view utama.
+        $content['contentPath'] = str_replace(DIRECTORY_SEPARATOR, '\\', $contentPath);
         $page = $contentPath . $view;
 
         $data = [
