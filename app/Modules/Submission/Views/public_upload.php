@@ -101,6 +101,7 @@
                         </div>
 
                         <form action="<?= base_url('unggah/proses') ?>" method="POST" enctype="multipart/form-data" id="formUnggah" novalidate>
+    <?= csrf_field() ?>
                             
                             <!-- ============ STEP 1: DATA MAHASISWA ============ -->
                             <div class="xu-panel active" data-panel="1">
