@@ -68,15 +68,11 @@ class BkdController extends BaseController
         if ($semester === null) {
             return redirect()->to('/bkd/laporan')->with('error', 'Semester tidak valid.');
         }
-        $db = \Config\Database::connect();
-        
-        // Hapus data lama semester ini
-        $db->table('dosen_bkd_rekap')->where('semester', $semester)->delete();
 
-        // Generate ulang (logic sama dengan laporan())
+        $db = \Config\Database::connect();
         $dateRange = $this->getDateRangeFromSemester($semester);
-        $sks_bim = $this->getSetting('bkd_sks_pembimbing', 2.00);
-        $sks_uji = $this->getSetting('bkd_sks_penguji', 1.00);
+        $sks_bim = (float) $this->getSetting('bkd_sks_pembimbing', 2.00);
+        $sks_uji = (float) $this->getSetting('bkd_sks_penguji', 1.00);
 
         $sql = "SELECT s.supervisor_id, s.supervisor_name,
                     COUNT(DISTINCT bs.biblio_id) as total_bim,
@@ -89,19 +85,42 @@ class BkdController extends BaseController
                 GROUP BY s.supervisor_id, s.supervisor_name
                 HAVING total_bim > 0 OR total_uji > 0";
 
-        $result = $db->query($sql, [$dateRange[0], $dateRange[1], $dateRange[0], $dateRange[1]])->getResult();
+        try {
+            $db->transBegin();
 
-        foreach ($result as $r) {
-            $db->table('dosen_bkd_rekap')->insert([
-                'dosen_id' => $r->supervisor_id,
-                'semester' => $semester,
-                'total_pembimbing' => $r->total_bim,
-                'total_penguji' => $r->total_uji,
-                'sks_pembimbing' => $r->total_bim * $sks_bim,
-                'sks_penguji' => $r->total_uji * $sks_uji,
-                'total_sks' => ($r->total_bim * $sks_bim) + ($r->total_uji * $sks_uji),
-                'generated_at' => date('Y-m-d H:i:s')
-            ]);
+            // Hapus dan buat ulang rekap dalam satu transaksi agar kegagalan tidak mengosongkan laporan.
+            $db->table('dosen_bkd_rekap')->where('semester', $semester)->delete();
+
+            $result = $db->query($sql, [
+                $dateRange[0], $dateRange[1],
+                $dateRange[0], $dateRange[1]
+            ])->getResult();
+
+            foreach ($result as $r) {
+                $db->table('dosen_bkd_rekap')->insert([
+                    'dosen_id' => $r->supervisor_id,
+                    'semester' => $semester,
+                    'total_pembimbing' => $r->total_bim,
+                    'total_penguji' => $r->total_uji,
+                    'sks_pembimbing' => $r->total_bim * $sks_bim,
+                    'sks_penguji' => $r->total_uji * $sks_uji,
+                    'total_sks' => ($r->total_bim * $sks_bim) + ($r->total_uji * $sks_uji),
+                    'generated_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+
+            if ($db->transStatus() === false) {
+                $db->transRollback();
+                return redirect()->to('/bkd/laporan?semester=' . $semester)
+                    ->with('error', 'Laporan BKD gagal dibuat. Periksa log server.');
+            }
+
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Generate laporan BKD semester ' . $semester . ' gagal: ' . $e->getMessage());
+            return redirect()->to('/bkd/laporan?semester=' . $semester)
+                ->with('error', 'Laporan BKD gagal dibuat. Periksa log server.');
         }
 
         return redirect()->to('/bkd/laporan?semester=' . $semester)
