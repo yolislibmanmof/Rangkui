@@ -90,16 +90,40 @@ class BackupController extends BaseController
             $db_user = $this->db->username;
             $db_password = $this->db->password;
 
-            // Quote semua argumen shell agar spasi/karakter khusus pada konfigurasi tidak merusak perintah.
-            $command = escapeshellarg($mysql_dump_path) . ' --single-transaction --quick'
-                . ' --user=' . escapeshellarg((string) $db_user)
-                . ' ' . escapeshellarg('--password=' . (string) $db_password)
-                . ' --host=' . escapeshellarg((string) $db_host)
-                . ' --port=' . (int) $this->db->port
-                . ' --databases ' . escapeshellarg((string) $db_name)
+            // Simpan kredensial sementara di luar webroot agar password tidak tampil di daftar proses.
+            $credentialsFile = tempnam($backupPath, '.db-auth-');
+            if ($credentialsFile === false) {
+                $log_message = 'Backup gagal: tidak dapat membuat berkas kredensial sementara.';
+                slim_alert('error', $log_message);
+                Services::writeLog(getTypeUser($this->session->user_type), $this->session->user_id, 'Backup', $log_message);
+                return redirect()->to('sistem/backups');
+            }
+
+            $escapeOption = static function ($value): string {
+                $value = str_replace(["\\", "\"", "\r", "\n"], ["\\\\", "\\\"", '', ''], (string) $value);
+                return '"' . $value . '"';
+            };
+            $clientConfig = "[client]\n"
+                . 'user=' . $escapeOption($db_user) . "\n"
+                . 'password=' . $escapeOption($db_password) . "\n"
+                . 'host=' . $escapeOption($db_host) . "\n"
+                . 'port=' . (int) $this->db->port . "\n";
+
+            if (file_put_contents($credentialsFile, $clientConfig, LOCK_EX) === false || !chmod($credentialsFile, 0600)) {
+                @unlink($credentialsFile);
+                $log_message = 'Backup gagal: berkas kredensial sementara tidak dapat diamankan.';
+                slim_alert('error', $log_message);
+                Services::writeLog(getTypeUser($this->session->user_type), $this->session->user_id, 'Backup', $log_message);
+                return redirect()->to('sistem/backups');
+            }
+
+            $command = escapeshellarg($mysql_dump_path)
+                . ' --defaults-extra-file=' . escapeshellarg($credentialsFile)
+                . ' --single-transaction --quick --databases ' . escapeshellarg((string) $db_name)
                 . ' > ' . escapeshellarg($fullPath) . ' 2>&1';
 
             exec($command, $output, $status);
+            @unlink($credentialsFile);
 
             if ($status === COMMAND_SUCCESS && is_file($fullPath) && filesize($fullPath) > 0) {
 
