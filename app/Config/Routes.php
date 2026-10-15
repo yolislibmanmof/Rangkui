@@ -114,5 +114,5 @@ $routes->group('bkd', ['namespace' => 'App\Modules\Reporting\Controllers'], func
 $routes->group('yudisium', function($routes) {
     $routes->get('/', '\App\Modules\Bibliography\Controllers\YudisiumController::index');
     $routes->get('cek/(:segment)', '\App\Modules\Bibliography\Controllers\YudisiumController::check/$1');
-    $routes->get('generate-certificate/(:num)', '\App\Modules\Bibliography\Controllers\YudisiumController::generateCertificate/$1');
+    $routes->post('generate-certificate/(:num)', '\App\Modules\Bibliography\Controllers\YudisiumController::generateCertificate/$1', ['filter' => 'csrf']);
 });
