@@ -176,7 +176,10 @@ class InstallController extends BaseController
 
         $settingsPath = ROOTPATH . 'admin/setting.php';
         if (!is_file($settingsPath) || !is_readable($settingsPath)) {
-            return "File pengaturan instalasi admin/setting.php tidak ditemukan.";
+            $settingsPath = ROOTPATH . 'admin.backup/setting.php';
+        }
+        if (!is_file($settingsPath) || !is_readable($settingsPath)) {
+            return "File pengaturan instalasi tidak ditemukan di admin/setting.php maupun admin.backup/setting.php.";
         }
         $settings = include $settingsPath;
         if (!is_array($settings) || !isset($settings['settings'], $settings['users']) || !is_array($settings['settings']) || !is_array($settings['users'])) {
@@ -266,32 +269,14 @@ class InstallController extends BaseController
              */
 
             // Attempt to delete the admin folder with error handling
-            if (!$this->_deleteFolder(ROOTPATH . 'admin')) {
+            if (is_dir(ROOTPATH . 'admin') && !$this->_deleteFolder(ROOTPATH . 'admin')) {
                 return $this->respond([
                     'status' => 'error',
                     'message' => 'Failed to delete admin folder. Check permissions.'
                 ]);
             }
 
-            // Replace content of Routes.php with content from Routes.local.php
-            $sourceFilePath = $configPath . '/Routes.local.php';
-            $targetFilePath = $configPath . '/Routes.php';
-            if (file_exists($sourceFilePath)) {
-                $content = file_get_contents($sourceFilePath);
-                if ($content !== false) {
-                    if (file_put_contents($targetFilePath, $content) === false) {
-                        return $this->respond([
-                            'status' => 'error',
-                            'message' => 'Failed to update Routes.php with content from Routes.local.php. Check permissions.'
-                        ]);
-                    }
-                } else {
-                    return $this->respond([
-                        'status' => 'error',
-                        'message' => 'Failed to read content from Routes.local.php.'
-                    ]);
-                }
-            }
+            // Routes.php mengatur sendiri kapan installer aktif; jangan menimpa rute terbaru dengan file lama.
         } catch (\Exception $e) {
             return "Error pada : " . $e->getMessage();  // Jika terjadi error, hentikan dan tampilkan pesan error
         }
@@ -299,9 +284,9 @@ class InstallController extends BaseController
         $status = "success";
         $message = "Installation Complete";
         if ($initialAdminUsername !== '' && $initialAdminPassword !== '') {
-            $message .= "\\nUsername administrator awal: " . $initialAdminUsername
-                . "\\nPassword awal (simpan sekarang): " . $initialAdminPassword
-                . "\\nSegera ganti password setelah login pertama.";
+            $message .= "\nUsername administrator awal: " . $initialAdminUsername
+                . "\nPassword awal (simpan sekarang): " . $initialAdminPassword
+                . "\nSegera ganti password setelah login pertama.";
         }
         /**
          * Comment when testing
@@ -428,32 +413,14 @@ class InstallController extends BaseController
             // });
 
             // Attempt to delete the admin folder with error handling
-            if (!$this->_deleteFolder(ROOTPATH . 'admin')) {
+            if (is_dir(ROOTPATH . 'admin') && !$this->_deleteFolder(ROOTPATH . 'admin')) {
                 return $this->respond([
                     'status' => 'error',
                     'message' => 'Failed to delete admin folder. Check permissions.'
                 ]);
             }
 
-            $configPath = APPPATH . "Config";
-            $sourceFilePath = $configPath . '/Routes.local.php';
-            $targetFilePath = $configPath . '/Routes.php';
-            if (file_exists($sourceFilePath)) {
-                $content = file_get_contents($sourceFilePath);
-                if ($content !== false) {
-                    if (file_put_contents($targetFilePath, $content) === false) {
-                        return $this->respond([
-                            'status' => 'error',
-                            'message' => 'Failed to update Routes.php with content from Routes.local.php. Check permissions.'
-                        ]);
-                    }
-                } else {
-                    return $this->respond([
-                        'status' => 'error',
-                        'message' => 'Failed to read content from Routes.local.php.'
-                    ]);
-                }
-            }
+            // Routes.php mengatur sendiri kapan installer aktif; jangan menimpa rute terbaru dengan file lama.
         } catch (Exception $e) {
             return $this->respond([
                 'status' => 'error',
