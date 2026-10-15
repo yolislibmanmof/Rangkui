@@ -150,6 +150,7 @@ class AdminDashboard extends BaseController
             return redirect()->back()->with('error', 'Submission tidak ditemukan atau tidak berada pada tahap admin.');
         }
 
+        $db->transBegin();
         $db->table('xu_submission')->where('submission_id', $submission_id)->update([
             'status' => 'revisi',
             'note' => $note,
@@ -157,8 +158,10 @@ class AdminDashboard extends BaseController
         ]);
 
         if ($db->transStatus() === false) {
+            $db->transRollback();
             return redirect()->back()->with('error', 'Permintaan revisi gagal disimpan.');
         }
+        $db->transCommit();
 
         return redirect()->back()->with('warning', 'Revisi diminta kepada mahasiswa.');
     }
