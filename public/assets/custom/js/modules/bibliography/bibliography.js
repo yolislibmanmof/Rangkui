@@ -173,7 +173,7 @@ $("#addRow").click(function () {
                          <option value="0" selected>Batasi Akses</option>
                          <option value="1">Semua Anggota</option>
                     </select></div>
-                <div class="col-md-2"><input type="file" name="attc_file[]" placeholder="File" class="form-control" onchange="return validExt(this,2097152,['pdf'])" accept="application/pdf"><small>Max PDF size 50 MB</small></div>
+                <div class="col-md-2"><input type="file" name="attc_file[]" placeholder="File" class="form-control" onchange="return validExt(this,52428800,['pdf'])" accept="application/pdf"><small>Max PDF size 50 MB</small></div>
                 <div class="col-sm-1"><button type="button" id="${no}" class="btn btn-danger btn-remove btn-block btn-sm"><i class="fa fa-minus"></i></button></div>
 							</div>`);
   no++;
