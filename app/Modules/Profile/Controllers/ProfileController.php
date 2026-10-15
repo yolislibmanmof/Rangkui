@@ -101,6 +101,15 @@ class ProfileController extends BaseController
         // ✅ VALIDATION RULES (CI4 Standard)
         // ============================================
         $validationRules = [
+            'username' => [
+                'label' => 'Username',
+                'rules' => 'required|min_length[2]|max_length[50]',
+                'errors' => [
+                    'required' => 'Username wajib diisi.',
+                    'min_length' => 'Username minimal 2 karakter.',
+                    'max_length' => 'Username maksimal 50 karakter.'
+                ]
+            ],
             'realname' => [
                 'label' => 'Nama Lengkap',
                 'rules' => 'required|min_length[3]|max_length[100]|regex_match[/^[a-zA-Z\s.\'-]+$/]',
@@ -159,9 +168,25 @@ class ProfileController extends BaseController
         // ============================================
         // ✅ SANITIZE & PREPARE DATA
         // ============================================
+        // Pastikan username unik, kecuali untuk akun yang sedang diedit.
+        $newUsername = trim((string) $request->getPost('username'));
+        $duplicateUsername = $this->db->table('user')
+            ->select('user_id')
+            ->where('username', $newUsername)
+            ->where('user_id !=', (int) $uid)
+            ->limit(1)
+            ->get()
+            ->getRowArray();
+
+        if ($duplicateUsername) {
+            slim_alert('error', 'Username sudah digunakan oleh akun lain.');
+            return redirect()->back()->withInput();
+        }
+
         // Tidak perlu escapeString() manual - CI4 Model sudah handle ini
         // Cukup ambil data yang sudah divalidasi
         $data = [
+            'username'    => $newUsername,
             'realname'    => trim($request->getPost('realname')),
             'email'       => trim(strtolower($request->getPost('email'))),
             'user_type'   => trim($request->getPost('user_type') ?? ''),
@@ -237,6 +262,8 @@ class ProfileController extends BaseController
                 log_message('error', $log_message);
             } else {
                 $this->db->transCommit();
+                // Perbarui username pada sesi aktif agar navbar/sesi tetap konsisten.
+                session()->set('username', $data['username']);
                 $log_message = "Update profile {$data['realname']} (ID: {$uid}) SUCCESS";
                 slim_alert('success', 'Profile berhasil disimpan.');
                 log_message('info', $log_message);
