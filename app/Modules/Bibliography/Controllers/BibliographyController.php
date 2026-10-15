@@ -811,10 +811,46 @@ class BibliographyController extends BaseController
                 $message = "Data {$name} sudah ada.";
                 $data    = ['id' => $existing->$idKey, 'val' => $name];
             } else {
-                $db->table("mst_{$tbl}")->insert([
-                    $col         => $name,
-                    'input_date' => $now,
-                ]);
+                // Isi kolom wajib sesuai skema tabel master pada instalasi.
+                $newMaster = [
+                    $col          => $name,
+                    'input_date'  => $now,
+                    'last_update' => $now,
+                ];
+
+                switch ($tbl) {
+                    case 'topic':
+                        $newMaster['topic_type'] = 't';
+                        $newMaster['classification'] = '';
+                        break;
+                    case 'author':
+                        $newMaster['authority_type'] = 'p';
+                        break;
+                    case 'contributor':
+                        $newMaster['contributor_type'] = 'p';
+                        break;
+                    case 'supervisor':
+                        // Nomor identitas belum diminta oleh formulir tambah-cepat.
+                        $newMaster['supervisor_number'] = '';
+                        break;
+                    case 'examiner':
+                        // Nomor identitas belum diminta oleh formulir tambah-cepat.
+                        $newMaster['examiner_number'] = '';
+                        $newMaster['examiner_type'] = 'p';
+                        break;
+                }
+
+                $inserted = $db->table("mst_{$tbl}")->insert($newMaster);
+                if ($inserted === false) {
+                    $dbError = $db->error();
+                    log_message('error', "addOptions gagal menyimpan mst_{$tbl}: " . ($dbError['message'] ?? 'unknown database error'));
+                    return $this->response->setJSON([
+                        'status'  => 'error',
+                        'message' => 'Gagal menyimpan data pilihan. Periksa kolom wajib pada tabel master.',
+                        'data'    => '',
+                        'title'   => $optFor
+                    ])->setStatusCode(500);
+                }
                 $lastId  = $db->insertID();
                 $status  = "success";
                 $message = "Berhasil tambah data {$name}.";
