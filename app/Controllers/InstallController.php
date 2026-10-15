@@ -153,16 +153,34 @@ class InstallController extends BaseController
             'port'     => (int)$port,
         ]);
 
-        $db->query("CREATE DATABASE IF NOT EXISTS {$database};");
-        // Path file backup SQL
-        $filePath = ROOTPATH . 'admin/brantas.sql'; //
+        // Batasi nama database ke karakter aman sebelum dipakai sebagai SQL identifier.
+        $database = trim((string) $database);
+        if (!preg_match('/^[A-Za-z0-9_]+$/D', $database)) {
+            return "Nama database tidak valid. Gunakan huruf, angka, dan garis bawah.";
+        }
 
-        $settings = include(ROOTPATH . "admin/setting.php");
-        // Baca isi file SQL
-        $sqlContent = file_get_contents($filePath);
+        $db->query('CREATE DATABASE IF NOT EXISTS `' . $database . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;');
 
-        if ($sqlContent === false) {
-            return "File SQL tidak ditemukan atau tidak bisa dibaca.";
+        // Utamakan schema lama hanya jika bersih; jika hilang atau ada konflik Git, gunakan schema sanitasi.
+        $filePath = ROOTPATH . 'admin/brantas.sql';
+        $sqlContent = is_file($filePath) && is_readable($filePath) ? file_get_contents($filePath) : false;
+
+        if (!is_string($sqlContent) || trim($sqlContent) === '' || preg_match('/^(<<<<<<<|=======|>>>>>>>)/m', $sqlContent)) {
+            $filePath = ROOTPATH . 'schema.sql';
+            $sqlContent = is_file($filePath) && is_readable($filePath) ? file_get_contents($filePath) : false;
+        }
+
+        if (!is_string($sqlContent) || trim($sqlContent) === '' || preg_match('/^(<<<<<<<|=======|>>>>>>>)/m', $sqlContent)) {
+            return "File schema SQL tidak ditemukan atau tidak valid. Pastikan schema.sql tersedia.";
+        }
+
+        $settingsPath = ROOTPATH . 'admin/setting.php';
+        if (!is_file($settingsPath) || !is_readable($settingsPath)) {
+            return "File pengaturan instalasi admin/setting.php tidak ditemukan.";
+        }
+        $settings = include $settingsPath;
+        if (!is_array($settings) || !isset($settings['settings'], $settings['users']) || !is_array($settings['settings']) || !is_array($settings['users'])) {
+            return "Format admin/setting.php tidak valid.";
         }
 
         try {
@@ -187,14 +205,30 @@ class InstallController extends BaseController
                 'port'     => (int)$port,
             ]);
 
-            $queries = explode(';', $sqlContent); // Memecah setiap query berdasarkan tanda ';'
-            foreach ($queries as $query) {
-                $query = trim($query);
-                if (!empty($query)) {
-                    $db->query($query);  // Jalankan query
-
-                }
+            // multi_query menangani seluruh statement tanpa memotong titik koma di dalam string SQL.
+            $connection = $db->connID;
+            if (!$connection instanceof \mysqli) {
+                throw new \RuntimeException('Koneksi MySQLi tidak tersedia untuk impor schema.');
             }
+            if (!$connection->multi_query($sqlContent)) {
+                throw new \RuntimeException('Impor schema gagal: ' . $connection->error);
+            }
+
+            do {
+                $result = $connection->store_result();
+                if ($result instanceof \mysqli_result) {
+                    $result->free();
+                }
+                if ($connection->errno !== 0) {
+                    throw new \RuntimeException('Impor schema gagal: ' . $connection->error);
+                }
+                if (!$connection->more_results()) {
+                    break;
+                }
+                if (!$connection->next_result()) {
+                    throw new \RuntimeException('Impor schema gagal: ' . $connection->error);
+                }
+            } while (true);
 
             $s = $db->table('setting');
             $sql = "INSERT INTO setting (setting_id, setting_name, setting_value)";
