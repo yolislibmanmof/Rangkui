@@ -110,7 +110,7 @@ class Login extends BaseController
                     } else {
                         log_message('error', 'Legacy password migration failed for user ID ' . (int) $user['user_id']);
                     }
-                } catch (\\Throwable $e) {
+                } catch (\Throwable $e) {
                     log_message('error', 'Legacy password migration exception for user ID ' . (int) $user['user_id'] . ': ' . $e->getMessage());
                 }
             }
