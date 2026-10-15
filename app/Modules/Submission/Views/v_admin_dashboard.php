@@ -252,7 +252,7 @@
                         <small class="text-muted"><?= esc($sub->mahasiswa_nama ?? 'Non-member') ?></small>
                     </td>
                     <td>
-                        <strong><?= character_limiter($sub->title ?? '-', 60) ?></strong>
+                        <strong><?= esc(character_limiter($sub->title ?? '-', 60)) ?></strong>
                     </td>
                     <td>
                         <?= date('d M Y', strtotime($sub->created_at)) ?><br>
@@ -271,7 +271,7 @@
                     </td>
                     <td>
                         <?php if ($sub->note): ?>
-                            <small class="text-muted"><?= character_limiter($sub->note, 40) ?></small>
+                            <small class="text-muted"><?= esc(character_limiter($sub->note, 40)) ?></small>
                         <?php else: ?>
                             <span class="text-muted">-</span>
                         <?php endif; ?>
