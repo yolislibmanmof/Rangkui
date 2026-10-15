@@ -45,17 +45,31 @@ class CertificateController extends BaseController
             return redirect()->back()->with('error', 'Sertifikat tidak ditemukan');
         }
 
-        // Generate file HTML jika belum ada
-        $fullPath = FCPATH . ltrim($cert->pdf_path, '/');
-        $htmlPath = str_replace('.pdf', '.html', $fullPath);
-
-        if (!$cert->pdf_path || (!file_exists($fullPath) && !file_exists($htmlPath))) {
-            $this->generateCertificateHtml($cert);
+        // Hanya izinkan file sertifikat yang berada di direktori penyimpanan sertifikat.
+        $relativePath = str_replace('\\\\', '/', ltrim((string) ($cert->pdf_path ?? ''), '/\\\\'));
+        if ($relativePath !== '' && (!str_starts_with($relativePath, 'uploads/certificates/') || str_contains($relativePath, '..'))) {
+            log_message('error', 'Path sertifikat tidak valid untuk cert_id ' . (int) $cert->cert_id);
+            return redirect()->back()->with('error', 'Lokasi berkas sertifikat tidak valid.');
         }
 
-        // Download file HTML (karena PDF generator belum diinstall)
-        $downloadPath = file_exists($fullPath) ? $fullPath : $htmlPath;
-        $downloadName = $cert->certificate_no . '.html';
+        $fullPath = $relativePath !== '' ? FCPATH . $relativePath : '';
+        $htmlPath = $fullPath !== '' ? preg_replace('/\\.pdf$/i', '.html', $fullPath) : '';
+
+        if ($relativePath === '' || (!is_file($fullPath) && !is_file($htmlPath))) {
+            $htmlPath = $this->generateCertificateHtml($cert);
+            if (!is_string($htmlPath) || !is_file($htmlPath)) {
+                log_message('error', 'Gagal membuat HTML sertifikat untuk cert_id ' . (int) $cert->cert_id);
+                return redirect()->back()->with('error', 'Berkas sertifikat gagal dibuat.');
+            }
+        }
+
+        $downloadPath = is_file($fullPath) ? $fullPath : $htmlPath;
+        if (!is_file($downloadPath)) {
+            return redirect()->back()->with('error', 'Berkas sertifikat tidak ditemukan.');
+        }
+
+        $extension = strtolower((string) pathinfo($downloadPath, PATHINFO_EXTENSION));
+        $downloadName = (string) $cert->certificate_no . ($extension === 'pdf' ? '.pdf' : '.html');
 
         return $this->response->download($downloadPath, null)->setFileName($downloadName);
     }
@@ -76,9 +90,11 @@ class CertificateController extends BaseController
             return $existing->cert_id;
         }
 
-        // Ambil data biblio
-        $biblio = $db->table('biblio')->where('biblio_id', $biblio_id)->get()->getRow();
-        if (!$biblio) return null;
+        // Sertifikat hanya boleh diterbitkan untuk dokumen yang sudah resmi terbit.
+        $biblio = $db->table('biblio')->where('biblio_id', (int) $biblio_id)->get()->getRow();
+        if (!$biblio || ($biblio->approval_status ?? '') !== 'published') {
+            return null;
+        }
 
         // Cari file PDF utama untuk hash (via relasi biblio_attachment)
         $file = $db->table('biblio_attachment')
@@ -145,21 +161,27 @@ class CertificateController extends BaseController
 
     private function renderCertificateHtml($cert)
     {
-        $repoName = 'RANGKUI - Repositori Akademik Digital';
-        return "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Sertifikat {$cert->certificate_no}</title></head>
-        <body style='font-family: Georgia, serif; padding: 40px; text-align: center;'>
-            <h1 style='color:#059669;'>{$repoName}</h1>
+        $repoName = esc('RANGKUI - Repositori Akademik Digital');
+        $certificateNo = esc((string) ($cert->certificate_no ?? ''));
+        $title = esc((string) ($cert->title ?? ''));
+        $issuedAt = esc(date('d F Y H:i', strtotime((string) ($cert->issued_at ?? 'now'))));
+        $hash = esc((string) ($cert->sha256_hash ?? ''));
+        $verifyUrl = esc(base_url('sertifikat/' . rawurlencode((string) ($cert->certificate_no ?? ''))));
+
+        return "<!DOCTYPE html><html lang=\"id\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Sertifikat {$certificateNo}</title></head>
+        <body style=\"font-family: Georgia, serif; padding: 40px; text-align: center;\">
+            <h1 style=\"color:#059669;\">{$repoName}</h1>
             <h2>SERTIFIKAT DEPOSITO DIGITAL</h2>
-            <p>No: <strong>{$cert->certificate_no}</strong></p>
+            <p>No: <strong>{$certificateNo}</strong></p>
             <hr>
             <p>Dengan ini menyatakan bahwa karya ilmiah:</p>
-            <h3 style='margin:20px 0;'>{$cert->title}</h3>
+            <h3 style=\"margin:20px 0;\">{$title}</h3>
             <p>Telah disetor secara resmi ke repositori pada:</p>
-            <p><strong>" . date('d F Y H:i', strtotime($cert->issued_at)) . " WIB</strong></p>
+            <p><strong>{$issuedAt} WITA</strong></p>
             <hr>
             <p><strong>Hash SHA-256:</strong></p>
-            <p style='font-family: monospace; font-size: 10px; word-break: break-all;'>{$cert->sha256_hash}</p>
-            <p style='margin-top:30px;'>Verifikasi: " . base_url('sertifikat/' . $cert->certificate_no) . "</p>
+            <p style=\"font-family: monospace; font-size: 10px; word-break: break-all;\">{$hash}</p>
+            <p style=\"margin-top:30px;\">Verifikasi: {$verifyUrl}</p>
         </body></html>";
     }
 
