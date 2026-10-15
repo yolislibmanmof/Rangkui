@@ -198,8 +198,21 @@ class ApprovalController extends BaseController
         if (!$step) return redirect()->to('/')->with('msg', 'Tautan tidak valid atau sudah kedaluwarsa.');
         if ($step->status !== 'pending') return redirect()->to('/')->with('msg', 'Tahap ini sudah ditindaklanjuti.');
 
-        $sub    = $db->table('xu_submission')->where('submission_id', $step->submission_id)->get()->getRow();
-        $biblio = $db->table('biblio')->where('biblio_id', $sub->biblio_id)->get()->getRow();
+        $sub = $db->table('xu_submission')
+            ->where('submission_id', $step->submission_id)
+            ->get()
+            ->getRow();
+        if (!$sub) {
+            return redirect()->to('/')->with('msg', 'Submission tidak ditemukan.');
+        }
+
+        $biblio = $db->table('biblio')
+            ->where('biblio_id', $sub->biblio_id)
+            ->get()
+            ->getRow();
+        if (!$biblio) {
+            return redirect()->to('/')->with('msg', 'Dokumen tidak ditemukan.');
+        }
 
         // Ambil lampiran PDF pertama (via tabel files) untuk pratinjau penuh
         $atts = $db->table('biblio_attachment AS ba')
@@ -232,13 +245,30 @@ class ApprovalController extends BaseController
         $note   = (string) ($this->request->getPost('note') ?? '');
 
         $step = $db->table('xu_approval_step')->where('token', $token)->get()->getRow();
-        if (!$step || $step->status !== 'pending') return redirect()->to('/')->with('msg', 'Tautan tidak valid atau sudah digunakan.');
+        if (!$step || $step->status !== 'pending') {
+            return redirect()->to('/')->with('msg', 'Tautan tidak valid atau sudah digunakan.');
+        }
+
+        if (!in_array($action, ['setuju', 'revisi', 'tolak'], true)) {
+            return redirect()->to('/')->with('msg', 'Aksi persetujuan tidak valid.');
+        }
+
+        $sub = $db->table('xu_submission')
+            ->where('submission_id', $step->submission_id)
+            ->get()
+            ->getRow();
+        if (!$sub) {
+            return redirect()->to('/')->with('msg', 'Submission tidak ditemukan.');
+        }
+
+        $biblio = $db->table('biblio')->where('biblio_id', $sub->biblio_id)->get()->getRow();
+        if (!$biblio) {
+            return redirect()->to('/')->with('msg', 'Dokumen tidak ditemukan.');
+        }
 
         $db->table('xu_approval_step')->where('step_id', $step->step_id)->update([
             'status' => $action, 'note' => $note, 'acted_at' => date('Y-m-d H:i:s'),
         ]);
-
-        $sub = $db->table('xu_submission')->where('submission_id', $step->submission_id)->get()->getRow();
 
         if ($action === 'setuju') {
             $next = $db->table('xu_approval_step')
