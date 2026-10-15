@@ -36,6 +36,7 @@ jobs:
             app/Modules/Login/Controllers/Register.php
             app/Modules/Login/Controllers/Login.php
             app/Modules/Bibliography/Controllers/CertificateController.php
+            app/Modules/Bibliography/Controllers/BibliographyController.php
             app/Modules/Bibliography/Controllers/YudisiumController.php
             app/Modules/Bibliography/Views/yudisium_result.php
             app/Modules/Reporting/Controllers/BkdController.php
