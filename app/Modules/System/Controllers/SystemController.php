@@ -35,8 +35,8 @@ class SystemController extends BaseController
         $lang      = $this->db->table('mst_language');
         $list_lang = $lang->get()->getResult();
 
-        $publicKey  = $_ENV['recaptcha.publicKey'];
-        $privateKey = $_ENV['recaptcha.privateKey'];
+        $publicKey  = env('recaptcha.publicKey') ?: env('recaptcha.siteKey', '');
+        $privateKey = env('recaptcha.privateKey') ?: env('recaptcha.secretKey', '');
 
         $content = [
             'list_var'   => $list_var,
