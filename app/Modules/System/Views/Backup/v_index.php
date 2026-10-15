@@ -325,9 +325,12 @@ foreach ($list_backup as $__b) {
 <div class="xuBkCard xuR">
     <div class="xuBkHead">
         <h2><i class="fa fa-database"></i> Backup Data</h2>
-        <button class="xuBtnAdd" onclick="moveTo('<?= base_url('sistem/backups/add') ?>')">
-            <img src="<?= base_url('assets/custom/images/backup-solid.svg'); ?>" alt=""> Add New Backup
-        </button>
+        <form method="post" action="<?= base_url('sistem/backups/add') ?>" style="display:inline-block" onsubmit="return confirm('Buat backup database sekarang?')">
+            <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
+            <button class="xuBtnAdd" type="submit">
+                <img src="<?= base_url('assets/custom/images/backup-solid.svg'); ?>" alt=""> Add New Backup
+            </button>
+        </form>
     </div>
 
     <!-- Ringkasan backup -->
