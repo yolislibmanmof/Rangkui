@@ -50,6 +50,24 @@ class BibliographyController extends BaseController
             return redirect()->to('/bibliography/')->with('error', 'Method tidak diizinkan');
         }
 
+        // Deteksi upload yang melebihi post_max_size PHP (PHP akan mengosongkan POST/FILES).
+        $contentLength = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+        $postMaxRaw = trim((string) ini_get('post_max_size'));
+        $postMaxBytes = (int) $postMaxRaw;
+        $postMaxUnit = strtolower(substr($postMaxRaw, -1));
+        if ($postMaxUnit === 'g') {
+            $postMaxBytes *= 1024 * 1024 * 1024;
+        } elseif ($postMaxUnit === 'm') {
+            $postMaxBytes *= 1024 * 1024;
+        } elseif ($postMaxUnit === 'k') {
+            $postMaxBytes *= 1024;
+        }
+        if ($contentLength > 0 && $postMaxBytes > 0 && $contentLength > $postMaxBytes && empty($this->request->getPost())) {
+            log_message('error', 'Bibliography save ditolak: ukuran POST ' . $contentLength . ' byte melebihi post_max_size ' . $postMaxRaw);
+            slim_alert('error', 'Total unggahan melebihi batas server. Minta hosting menaikkan post_max_size dan upload_max_filesize, lalu coba kembali.');
+            return redirect()->to('/bibliography/add');
+        }
+
         $validationRules = [
             'title'     => 'required|min_length[5]|max_length[500]',
             'gmd'       => 'required|numeric',
@@ -67,6 +85,35 @@ class BibliographyController extends BaseController
 
         if (!$this->validate($validationRules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Validasi semua lampiran PDF di sisi server; validasi browser bukan pengaman.
+        $requestFiles = $this->request->getFiles();
+        $pdfFiles = $requestFiles['attc_file'] ?? [];
+        if (!is_array($pdfFiles)) {
+            $pdfFiles = [$pdfFiles];
+        }
+        foreach ($pdfFiles as $pdfFile) {
+            if (!$pdfFile) {
+                continue;
+            }
+            if ($pdfFile->getError() === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+            if (!$pdfFile->isValid()) {
+                log_message('error', 'Upload lampiran bibliografi gagal: ' . $pdfFile->getErrorString());
+                slim_alert('error', 'PDF gagal diunggah: ' . $pdfFile->getErrorString());
+                return redirect()->back()->withInput();
+            }
+            if ($pdfFile->getSize() > 50 * 1024 * 1024) {
+                slim_alert('error', 'Ukuran setiap PDF maksimal 50 MB.');
+                return redirect()->back()->withInput();
+            }
+            $pdfHead = @file_get_contents($pdfFile->getTempName(), false, null, 0, 1024);
+            if (strtolower((string) $pdfFile->getClientExtension()) !== 'pdf' || !is_string($pdfHead) || strpos($pdfHead, '%PDF-') === false) {
+                slim_alert('error', 'Lampiran harus berupa file PDF yang valid.');
+                return redirect()->back()->withInput();
+            }
         }
 
         $postData  = $this->request->getPost();
@@ -123,6 +170,27 @@ class BibliographyController extends BaseController
         if ($lastId == 0) {
             slim_alert('error', 'Gagal menyimpan dokumen.');
             return redirect()->to('/bibliography/');
+        }
+
+        // Simpan lampiran PDF setelah bibliografi memperoleh ID.
+        $hasPdfAttachment = false;
+        foreach (($postData['title_file'] ?? []) as $key => $unusedTitle) {
+            // Hanya sebagai fallback untuk struktur POST; keberadaan file dicek di $_FILES.
+            if (!empty($_FILES['attc_file']['name'][$key] ?? '')) {
+                $hasPdfAttachment = true;
+                break;
+            }
+        }
+        if (!$hasPdfAttachment && !empty($_FILES['attc_file']['name']) && !is_array($_FILES['attc_file']['name'])) {
+            $hasPdfAttachment = true;
+        }
+        if ($hasPdfAttachment) {
+            $titles       = $postData['title_file'] ?? [];
+            $urls         = $postData['url_file'] ?? [];
+            $descriptions = $postData['desk_file'] ?? [];
+            $aksesFiles   = $postData['akses_file'] ?? [];
+            $aksesMembers = $postData['akses_member'] ?? [];
+            $this->uploadattachment($user, $urls, $lastId, $_FILES['attc_file'], $aksesFiles, $aksesMembers, $titles, $descriptions);
         }
 
         $result = $biblio->insertBilioSub($lastId, $postData, FALSE);
