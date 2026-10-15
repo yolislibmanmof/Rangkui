@@ -9,9 +9,16 @@ use CodeIgniter\Router\RouteCollection;
  */
 
 // ===== 🌲 EMERALD FOREST: Installer Routes =====
-// Aktif HANYA saat folder admin/ masih ada (belum install)
-// Setelah install selesai, folder admin/ dihapus otomatis → blok ini non-aktif
-if (file_exists(ROOTPATH . 'admin/conf.inc.php')) {
+// Dukung installer lama dan instalasi bersih dari schema.sql.
+// Pada instalasi baru, .env.example masih ada dan .env belum dibuat.
+// Setelah instalasi selesai, installer mengubah .env.example menjadi .env;
+// route aplikasi normal kemudian aktif kembali.
+$legacyInstallerAvailable = is_file(ROOTPATH . 'admin/conf.inc.php');
+$cleanInstallerAvailable  = is_file(ROOTPATH . 'schema.sql')
+    && is_file(ROOTPATH . '.env.example')
+    && !is_file(ROOTPATH . '.env');
+
+if ($legacyInstallerAvailable || $cleanInstallerAvailable) {
     $routes->get('/', [InstallController::class, 'install']);
     $routes->get('install/fresh', [InstallController::class, 'fresh']);
     $routes->post('install/fresh', [InstallController::class, 'fresh']);
