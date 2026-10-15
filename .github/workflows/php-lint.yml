@@ -48,6 +48,10 @@ jobs:
             app/Modules/Reporting/Controllers/BkdController.php
             app/Modules/Reporting/Views/Reporting/bkd_laporan.php
             app/Modules/System/Controllers/BackupController.php
+            app/Modules/System/Views/Log/v_index.php
+            app/Modules/System/Views/IndexBiblio/v_index.php
+            app/Modules/System/Controllers/LogController.php
+            app/Modules/System/Controllers/IndexBiblioController.php
             app/Modules/System/Routes.php
             app/Modules/System/Views/Backup/v_index.php
             admin.backup/setting.php
