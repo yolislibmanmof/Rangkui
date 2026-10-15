@@ -49,7 +49,7 @@ class BackupController extends BaseController
             : 'command -v mysqldump 2>/dev/null';
         $mysql_dump_path = function_exists('shell_exec') ? shell_exec($lookupCommand) : null;
         $mysql_dump_path = trim((string) $mysql_dump_path);
-        $mysql_dump_path = strtok($mysql_dump_path, "\\r\\n") ?: '';
+        $mysql_dump_path = preg_split('/\r\n|\n|\r/', $mysql_dump_path)[0] ?? '';
 
         if ($mysql_dump_path === '' || !function_exists('exec')) {
             $log_message = 'Backup gagal: mysqldump tidak ditemukan atau fungsi exec/shell_exec dinonaktifkan oleh hosting.';
