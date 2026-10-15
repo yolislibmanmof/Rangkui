@@ -26,8 +26,8 @@ $routes->group('sistem', ['namespace' => 'App\Modules\System\Controllers'], func
     $routes->get('indeks-biblio/add', 'IndexBiblioController::add');
     $routes->post('indeks-biblio/save', 'IndexBiblioController::save');
     $routes->post('indeks-biblio/check', 'IndexBiblioController::check');
-    $routes->get('indeks-biblio/reindex', 'IndexBiblioController::reindex');
-    $routes->get('indeks-biblio/delete', 'IndexBiblioController::delete');
+    $routes->post('indeks-biblio/reindex', 'IndexBiblioController::reindex', ['filter' => 'csrf']);
+    $routes->post('indeks-biblio/delete', 'IndexBiblioController::delete', ['filter' => 'csrf']);
 
     //Modul
     $routes->get('modul', 'ModulController::index');
@@ -55,7 +55,7 @@ $routes->group('sistem', ['namespace' => 'App\Modules\System\Controllers'], func
 
     // Log
     $routes->get('logs', 'LogController::index');
-    $routes->get('logs/delete', 'LogController::delete');
+    $routes->post('logs/delete', 'LogController::delete', ['filter' => 'csrf']);
     $routes->get('logs/save', 'LogController::save');
 
     // Backup
