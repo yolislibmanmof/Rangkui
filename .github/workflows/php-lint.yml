@@ -1,0 +1,51 @@
+name: PHP syntax check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  php-lint:
+    name: Lint changed application files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Check PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            app/Config/Filters.php
+            app/Config/Routes.php
+            app/Controllers/InstallController.php
+            app/Modules/Submission/Routes.php
+            app/Modules/Submission/Controllers/AdminDashboard.php
+            app/Modules/Submission/Views/v_admin_dashboard.php
+            app/Modules/Login/Controllers/Register.php
+            app/Modules/Login/Controllers/Login.php
+            app/Modules/Bibliography/Controllers/CertificateController.php
+            app/Modules/Bibliography/Controllers/YudisiumController.php
+            app/Modules/Bibliography/Views/yudisium_result.php
+            app/Modules/Reporting/Controllers/BkdController.php
+            app/Modules/Reporting/Views/Reporting/bkd_laporan.php
+            app/Modules/System/Controllers/BackupController.php
+            app/Modules/System/Routes.php
+            app/Modules/System/Views/Backup/v_index.php
+            admin.backup/setting.php
+          )
+          for file in "${files[@]}"; do
+            echo "::group::php -l $file"
+            php -l "$file"
+            echo "::endgroup::"
+          done
