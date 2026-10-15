@@ -106,7 +106,7 @@ $routes->post('bibliography/suggest-ddc', '\App\Modules\Bibliography\Controllers
 $routes->group('bkd', ['namespace' => 'App\Modules\Reporting\Controllers'], function($routes) {
     $routes->get('/', 'BkdController::index');
     $routes->get('laporan', 'BkdController::laporan');
-    $routes->post('generate', 'BkdController::generate');
+    $routes->post('generate', 'BkdController::generate', ['filter' => 'csrf']);
     $routes->get('export/(:segment)', 'BkdController::export/$1');
 });
 
