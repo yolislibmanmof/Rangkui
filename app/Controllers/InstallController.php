@@ -244,8 +244,19 @@ class InstallController extends BaseController
                 $s->insert($data);
             }
 
+            $initialAdminUsername = '';
+            $initialAdminPassword = '';
             $u = $db->table('user');
             foreach ($settings['users'] as $key => $user) {
+                // Jangan gunakan kredensial admin statis dari repository; buat password unik saat instalasi.
+                if (strtolower((string) ($user['username'] ?? '')) === 'admin') {
+                    $initialAdminUsername = (string) $user['username'];
+                    $initialAdminPassword = bin2hex(random_bytes(12));
+                    $user['passwd'] = password_hash($initialAdminPassword, PASSWORD_BCRYPT, ['cost' => 12]);
+                    if ($user['passwd'] === false) {
+                        throw new \RuntimeException('Password administrator awal gagal dibuat.');
+                    }
+                }
                 $u->insert($user);
             }
 
@@ -287,6 +298,11 @@ class InstallController extends BaseController
 
         $status = "success";
         $message = "Installation Complete";
+        if ($initialAdminUsername !== '' && $initialAdminPassword !== '') {
+            $message .= "\\nUsername administrator awal: " . $initialAdminUsername
+                . "\\nPassword awal (simpan sekarang): " . $initialAdminPassword
+                . "\\nSegera ganti password setelah login pertama.";
+        }
         /**
          * Comment when testing
          */
