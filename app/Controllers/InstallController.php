@@ -321,14 +321,15 @@ class InstallController extends BaseController
 
         $this->_updateEnv();
 
-        // Path file backup SQL
-        $filePath = ROOTPATH . 'admin/upgrade.sql'; //
+        // Gunakan skrip upgrade lokal jika tersedia; bila tidak, pakai salinan terkontrol di admin.backup.
+        $filePath = ROOTPATH . 'admin/upgrade.sql';
+        if (!is_file($filePath) || !is_readable($filePath)) {
+            $filePath = ROOTPATH . 'admin.backup/upgrade.sql';
+        }
 
-        // Baca isi file SQL
-        $sqlContent = file_get_contents($filePath);
-
-        if ($sqlContent === false) {
-            return "File SQL tidak ditemukan atau tidak bisa dibaca.";
+        $sqlContent = is_file($filePath) && is_readable($filePath) ? file_get_contents($filePath) : false;
+        if (!is_string($sqlContent) || trim($sqlContent) === '' || preg_match('/^(<<<<<<<|=======|>>>>>>>)/m', $sqlContent)) {
+            return "File upgrade SQL tidak ditemukan atau tidak valid.";
         }
 
 
@@ -357,14 +358,30 @@ class InstallController extends BaseController
             ]);
 
 
-            $queries = explode(';', $sqlContent); // Memecah setiap query berdasarkan tanda ';'
-            foreach ($queries as $query) {
-                $query = trim($query);
-                if (!empty($query)) {
-                    $db->query($query);  // Jalankan query
-
-                }
+            // Jalankan multi-statement dengan parser MySQL agar titik koma di komentar/teks tidak memecah query.
+            $connection = $db->connID;
+            if (!$connection instanceof \mysqli) {
+                throw new \RuntimeException('Koneksi MySQLi tidak tersedia untuk upgrade.');
             }
+            if (!$connection->multi_query($sqlContent)) {
+                throw new \RuntimeException('Upgrade SQL gagal: ' . $connection->error);
+            }
+
+            do {
+                $result = $connection->store_result();
+                if ($result instanceof \mysqli_result) {
+                    $result->free();
+                }
+                if ($connection->errno !== 0) {
+                    throw new \RuntimeException('Upgrade SQL gagal: ' . $connection->error);
+                }
+                if (!$connection->more_results()) {
+                    break;
+                }
+                if (!$connection->next_result()) {
+                    throw new \RuntimeException('Upgrade SQL gagal: ' . $connection->error);
+                }
+            } while (true);
 
             $sql = "ALTER TABLE group_access DROP PRIMARY KEY;";
             $db->query($sql);
