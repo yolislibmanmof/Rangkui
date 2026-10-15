@@ -80,10 +80,10 @@ $routes->post('submission/extract-ai', '\App\Modules\Submission\Controllers\Subm
 
 // Dashboard Submission Admin
 $routes->get('submission/dashboard', '\App\Modules\Submission\Controllers\AdminDashboard::index');
-$routes->get('submission/approve/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::approve/$1');
-$routes->post('submission/reject/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::reject/$1');
-$routes->post('submission/requestRevisi/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::requestRevisi/$1');
-$routes->post('admin-dashboard/delete/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::delete/$1');
+$routes->post('submission/approve/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::approve/$1', ['filter' => 'csrf']);
+$routes->post('submission/reject/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::reject/$1', ['filter' => 'csrf']);
+$routes->post('submission/requestRevisi/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::requestRevisi/$1', ['filter' => 'csrf']);
+$routes->post('admin-dashboard/delete/(:num)', '\App\Modules\Submission\Controllers\AdminDashboard::delete/$1', ['filter' => 'csrf']);
 
 // ===== 🔬 PLAGIARISM GATE (PUBLIK) =====
 $routes->get('cek-similaritas', '\App\Modules\Submission\Controllers\PlagiarismController::index');
