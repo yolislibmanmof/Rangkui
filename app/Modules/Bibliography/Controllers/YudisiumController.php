@@ -89,17 +89,44 @@ class YudisiumController extends BaseController
 
     public function generateCertificate($biblio_id)
     {
-        // Panggil CertificateController untuk issue
-        $certController = new CertificateController();
-        $certId = $certController->issueCertificate($biblio_id, $this->session->get('user_id'));
-        
-        if ($certId) {
-            $db = \Config\Database::connect();
-            $cert = $db->table('biblio_certificates')->where('cert_id', $certId)->get()->getRow();
-            return redirect()->to('/sertifikat/' . $cert->certificate_no);
+        if (!$this->request->is('post')) {
+            return redirect()->back()->with('error', 'Permintaan tidak valid.');
         }
 
-        return redirect()->back()->with('error', 'Gagal generate sertifikat');
+        $biblioId = (int) $biblio_id;
+        if ($biblioId <= 0) {
+            return redirect()->back()->with('error', 'ID dokumen tidak valid.');
+        }
+
+        $db = \Config\Database::connect();
+        $biblio = $db->table('biblio')->where('biblio_id', $biblioId)->get()->getRow();
+        $maxSimilarity = (float) $this->getSetting('yudisium_max_similarity', 25);
+        $requireClearance = $this->getSetting('library_clearance_required', '1') === '1';
+
+        // Validasi ulang di server agar URL langsung tidak melewati syarat yudisium.
+        if (!$biblio || ($biblio->approval_status ?? '') !== 'published') {
+            return redirect()->back()->with('error', 'Dokumen belum disetujui untuk diterbitkan.');
+        }
+
+        if ($biblio->integrity_similarity === null || (float) $biblio->integrity_similarity > $maxSimilarity) {
+            return redirect()->back()->with('error', 'Dokumen belum memenuhi batas similaritas yudisium.');
+        }
+
+        if ($requireClearance && (int) ($biblio->opac_hide ?? 1) !== 0) {
+            return redirect()->back()->with('error', 'Dokumen belum mendapatkan verifikasi perpustakaan.');
+        }
+
+        $certController = new CertificateController();
+        $certId = $certController->issueCertificate($biblioId, $this->session->get('user_id'));
+
+        if ($certId) {
+            $cert = $db->table('biblio_certificates')->where('cert_id', $certId)->get()->getRow();
+            if ($cert && !empty($cert->certificate_no)) {
+                return redirect()->to('/sertifikat/' . rawurlencode((string) $cert->certificate_no));
+            }
+        }
+
+        return redirect()->back()->with('error', 'Sertifikat gagal dibuat. Pastikan seluruh syarat telah terpenuhi.');
     }
 
     private function saveChecklist($nim, $biblio_id, $result)
