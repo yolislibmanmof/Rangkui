@@ -310,15 +310,21 @@ $__pct    = $__total > 0 ? round($__idx / $__total * 100, 1) : 0;
         </div>
 
         <div class="xuActions">
-            <button onclick="moveTo('<?= base_url('sistem/indeks-biblio/delete'); ?>', 'Are you sure, want to empty index ?')" class="xuActBtn xuActDanger">
-                <i class="fa fa-trash"></i> Empty Index
-            </button>
+            <form method="post" action="<?= base_url('sistem/indeks-biblio/delete') ?>" style="display:inline" onsubmit="return confirm('Are you sure, want to empty index ?')">
+                <?= csrf_field() ?>
+                <button type="submit" class="xuActBtn xuActDanger">
+                    <i class="fa fa-trash"></i> Empty Index
+                </button>
+            </form>
             <button onclick="moveTo('<?= base_url('sistem/indeks-biblio/add'); ?>')" class="xuActBtn xuActPrimary">
                 <i class="fa fa-plus"></i> Re-Index
             </button>
-            <button onclick="moveTo('<?= base_url('sistem/indeks-biblio/reindex'); ?>')" class="xuActBtn xuActInfo">
-                <i class="fa fa-refresh"></i> Update Index
-            </button>
+            <form method="post" action="<?= base_url('sistem/indeks-biblio/reindex') ?>" style="display:inline">
+                <?= csrf_field() ?>
+                <button type="submit" class="xuActBtn xuActInfo">
+                    <i class="fa fa-refresh"></i> Update Index
+                </button>
+            </form>
         </div>
     </div>
 </div>
