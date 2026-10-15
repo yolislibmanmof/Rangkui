@@ -133,7 +133,16 @@ class BibliographyController extends BaseController
             return redirect()->back()->withInput();
         }
 
+        // Database hosting mensyaratkan biblio.unique_id (INT NOT NULL tanpa default).
+        // Ambil nomor berikutnya berdasarkan data yang sudah ada di tabel.
+        $uniqueRow = $this->db->table('biblio')
+            ->selectMax('unique_id', 'max_unique_id')
+            ->get()
+            ->getRowArray();
+        $nextUniqueId = ((int) ($uniqueRow['max_unique_id'] ?? 0)) + 1;
+
         $data = [
+            'unique_id'        => $nextUniqueId,
             'title'            => trim($postData['title'] ?? ''),
             'gmd_id'           => (int)($postData['gmd'] ?? 0),
             'item_type_id'     => (int)($postData['item_type'] ?? 0),
@@ -155,7 +164,8 @@ class BibliographyController extends BaseController
             'notes_en'         => trim($postData['notes_en'] ?? ''),
             'spec_detail_info' => trim($postData['specDetailInfo'] ?? ''),
             'image'            => $image,
-            'url_crossref'     => filter_var($postData['urlcrossref'] ?? '', FILTER_VALIDATE_URL) ?: null,
+            // Kolom url_crossref di database hosting bertipe NOT NULL.
+            'url_crossref'     => filter_var($postData['urlcrossref'] ?? '', FILTER_VALIDATE_URL) ?: '',
             'opac_hide'        => 0,
             'promoted'         => 0,
             'frequency_id'     => 0,
