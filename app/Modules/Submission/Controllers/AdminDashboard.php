@@ -41,54 +41,125 @@ class AdminDashboard extends BaseController
     
     public function approve($submission_id)
     {
+        if (!$this->request->is('post')) {
+            return redirect()->back()->with('error', 'Metode permintaan tidak diizinkan.');
+        }
+
+        $submission_id = (int) $submission_id;
+        if ($submission_id <= 0) {
+            return redirect()->back()->with('error', 'ID submission tidak valid.');
+        }
+
         $db = \Config\Database::connect();
-        
-        // Update submission
-        $db->table('xu_submission')->update([
-            'status' => 'disetujui',
-            'current_stage' => 'selesai',
-            'note' => 'Disetujui oleh admin pada ' . date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s')
-        ], ['submission_id' => $submission_id]);
-        
-        // Update biblio menjadi published
         $submission = $db->table('xu_submission')->where('submission_id', $submission_id)->get()->getRow();
-        if ($submission) {
-            $db->table('biblio')->update([
+
+        if (!$submission) {
+            return redirect()->back()->with('error', 'Submission tidak ditemukan.');
+        }
+        if (($submission->status ?? '') !== 'menunggu' || ($submission->current_stage ?? '') !== 'admin') {
+            return redirect()->back()->with('error', 'Submission tidak berada pada tahap persetujuan admin.');
+        }
+
+        $biblio = $db->table('biblio')->where('biblio_id', (int) $submission->biblio_id)->get()->getRow();
+        if (!$biblio) {
+            return redirect()->back()->with('error', 'Data bibliografi terkait tidak ditemukan.');
+        }
+
+        $db->transBegin();
+        try {
+            $db->table('xu_submission')->where('submission_id', $submission_id)->update([
+                'status' => 'disetujui',
+                'current_stage' => 'selesai',
+                'note' => 'Disetujui oleh admin pada ' . date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+            $db->table('biblio')->where('biblio_id', (int) $submission->biblio_id)->update([
                 'opac_hide' => 0,
                 'approval_status' => 'published',
                 'last_update' => date('Y-m-d H:i:s')
-            ], ['biblio_id' => $submission->biblio_id]);
+            ]);
+
+            if ($db->transStatus() === false) {
+                $db->transRollback();
+                return redirect()->back()->with('error', 'Submission gagal diperbarui.');
+            }
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Approval submission #' . $submission_id . ' gagal: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyetujui submission.');
         }
-        
+
         return redirect()->back()->with('success', 'Submission berhasil disetujui dan dipublikasikan.');
     }
     
     public function reject($submission_id)
     {
-        $note = $this->request->getPost('note') ?? 'Ditolak oleh admin';
-        
+        if (!$this->request->is('post')) {
+            return redirect()->back()->with('error', 'Metode permintaan tidak diizinkan.');
+        }
+
+        $submission_id = (int) $submission_id;
+        $note = trim((string) ($this->request->getPost('note') ?? 'Ditolak oleh admin'));
+        if (mb_strlen($note) > 2000) {
+            return redirect()->back()->with('error', 'Catatan penolakan terlalu panjang.');
+        }
+
         $db = \Config\Database::connect();
-        $db->table('xu_submission')->update([
+        $submission = $db->table('xu_submission')->where('submission_id', $submission_id)->get()->getRow();
+        if (!$submission || ($submission->status ?? '') !== 'menunggu' || ($submission->current_stage ?? '') !== 'admin') {
+            return redirect()->back()->with('error', 'Submission tidak ditemukan atau tidak berada pada tahap admin.');
+        }
+
+        $db->transBegin();
+        $db->table('xu_submission')->where('submission_id', $submission_id)->update([
             'status' => 'ditolak',
             'note' => $note,
             'updated_at' => date('Y-m-d H:i:s')
-        ], ['submission_id' => $submission_id]);
-        
+        ]);
+        $db->table('biblio')->where('biblio_id', (int) $submission->biblio_id)->update([
+            'approval_status' => 'draft',
+            'opac_hide' => 1,
+            'last_update' => date('Y-m-d H:i:s')
+        ]);
+
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+            return redirect()->back()->with('error', 'Submission gagal ditolak.');
+        }
+        $db->transCommit();
+
         return redirect()->back()->with('info', 'Submission ditolak.');
     }
     
     public function requestRevisi($submission_id)
     {
-        $note = $this->request->getPost('note') ?? 'Perlu revisi';
-        
+        if (!$this->request->is('post')) {
+            return redirect()->back()->with('error', 'Metode permintaan tidak diizinkan.');
+        }
+
+        $submission_id = (int) $submission_id;
+        $note = trim((string) ($this->request->getPost('note') ?? 'Perlu revisi'));
+        if ($note === '' || mb_strlen($note) > 2000) {
+            return redirect()->back()->with('error', 'Catatan revisi wajib diisi dan maksimal 2.000 karakter.');
+        }
+
         $db = \Config\Database::connect();
-        $db->table('xu_submission')->update([
+        $submission = $db->table('xu_submission')->where('submission_id', $submission_id)->get()->getRow();
+        if (!$submission || ($submission->status ?? '') !== 'menunggu' || ($submission->current_stage ?? '') !== 'admin') {
+            return redirect()->back()->with('error', 'Submission tidak ditemukan atau tidak berada pada tahap admin.');
+        }
+
+        $db->table('xu_submission')->where('submission_id', $submission_id)->update([
             'status' => 'revisi',
             'note' => $note,
             'updated_at' => date('Y-m-d H:i:s')
-        ], ['submission_id' => $submission_id]);
-        
+        ]);
+
+        if ($db->transStatus() === false) {
+            return redirect()->back()->with('error', 'Permintaan revisi gagal disimpan.');
+        }
+
         return redirect()->back()->with('warning', 'Revisi diminta kepada mahasiswa.');
     }
 
