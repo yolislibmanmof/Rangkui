@@ -349,9 +349,12 @@ foreach ($list_logs as $__l) {
             <button class="xuBtnLog xuBtnDump" onclick="moveTo('<?= base_url('sistem/logs/save') ?>')">
                 <i class="fa fa-download"></i> Simpan Catatan ke Dalam Berkas
             </button>
-            <button class="xuBtnLog xuBtnWipe" onclick="moveTo('<?= base_url('sistem/logs/delete') ?>', 'Are you sure, want to empty system log ?' )">
-                <i class="fa fa-trash"></i> Hapus Catatan
-            </button>
+            <form method="post" action="<?= base_url('sistem/logs/delete') ?>" style="display:inline" onsubmit="return confirm('Are you sure, want to empty system log ?')">
+                <?= csrf_field() ?>
+                <button type="submit" class="xuBtnLog xuBtnWipe">
+                    <i class="fa fa-trash"></i> Hapus Catatan
+                </button>
+            </form>
         </div>
     </div>
 
